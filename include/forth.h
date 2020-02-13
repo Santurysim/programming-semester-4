@@ -4,60 +4,63 @@
 #include <stdint.h>
 #include <stdio.h>
 
-struct forth;
-typedef intptr_t cell;
-
 #define MAX_WORD 32
 
-struct word {
-    struct word *next;
-    uint8_t length;
-    char name[];
-};
-
-struct forth {
-    cell *sp;
-    cell *memory;
-    struct word *latest;
-    
-    FILE* input;
-
-    cell *memory_free;
-    cell *sp0;
-    size_t memory_size;
-    size_t data_size;
-};
-
-
-struct word* word_add(struct forth *forth,
-    uint8_t length, const char name[length]);
-const void* word_code(const struct word *word);
-const struct word* word_find(const struct word* first,
-    uint8_t length, const char name[length]);
+// struct forth;
+typedef intptr_t cell;
 
 typedef void (*function)(struct forth *forth);
 
-int forth_init(struct forth *forth, FILE* input,
-    size_t memory, size_t stack);
-void forth_free(struct forth *forth);
-
-void forth_push(struct forth *forth, cell value);
-cell forth_pop(struct forth *forth);
-cell* forth_top(struct forth *forth);
-void forth_emit(struct forth *forth, cell value);
-void forth_add_codeword(struct forth *forth,
-    const char* name, const function handler);
-
-void cell_print(cell c);
-
-enum forth_result {
+enum ForthResult {
     FORTH_OK,
     FORTH_EOF,
     FORTH_WORD_NOT_FOUND,
     FORTH_BUFFER_OVERFLOW,
 };
 
-enum forth_result read_word(FILE* source,
-    size_t buffer_size, char buffer[buffer_size], size_t *length);
+class Word{
+	private:
+		Word *next;
+		uint8_t length;
+		char *name;
+	public:
+		Word();
+		~Word();
+		Word* getNextWord() const;
+		uint8_t getLength() const;
+		char* getName() const;
+		const void* getCode() const;
+		const Word* find(char *name, uint8_t length) const;
+		// TODO
+};
 
-enum forth_result forth_run(struct forth* forth);
+class Forth{
+	private:
+		cell *stackPointer;
+		cell *memory;
+
+		Word *latest;
+    
+		FILE* input;
+
+		cell *freeMemory;
+		cell *sp0;
+		size_t memorySize;
+		size_t dataSize;
+	public:
+		Forth(FILE *_input, size_t _memorySize, size_t stackSize);
+		~Forth();
+		void push(cell value);
+		cell pop();
+		cell* top();
+		void emit(cell value);
+		void addCodeword(const char *name, const function handler);
+		ForthResult run();
+
+		Word* addWord(const char *name, uint8_t length);
+};
+
+void printCell(cell c);
+
+ForthResult readWord(FILE* source,
+    char* buffer, size_t bufferSize, size_t *length);

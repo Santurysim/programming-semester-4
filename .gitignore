@@ -1,2 +1,3 @@
 build
 *.gc*
+.vscode
