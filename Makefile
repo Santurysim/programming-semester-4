@@ -4,8 +4,8 @@
 all: build build/cforth
 
 # Из каких модулей собирается программа
-CFORTH_MODULES = main.c forth.c words.c
-TEST_MODULES = test.c
+CFORTH_MODULES = main.cpp forth.cpp words.cpp
+TEST_MODULES = test.cpp
 # Общий вид правила:
 # первая строка — фрагмент ориентированного графа зависимостей
 # результат: зависимость-1 зависмость-2 ...
@@ -22,7 +22,7 @@ TEST_MODULES = test.c
 # Вместо $@ подставляется имя результата (build/cforth)
 
 build/cforth: $(CFORTH_MODULES:%=build/%.o)
-	$(CC) $^ -o $@
+	$(CXX) $^ -o $@
 
 # Общие (неизменяемые) настройки компилятора
 # -MMD — сгенерировать файлы с описанием зависимостей (см. DEPS далее)
@@ -54,10 +54,10 @@ CFLAGS_COVERAGE = -fprofile-arcs -ftest-coverage -fPIC
 #     основная зависимость — src/(что-то).c
 # $< — первая зависимость в списке (ещё есть зависимости из DEPS)
 build/%.c.o: src/%.c
-	$(CC) $(CFLAGS_COMMON) $(CFLAGS) -c $< -o $@
+	$(CXX) $(CFLAGS_COMMON) $(CFLAGS) -c $< -o $@
 
 build/test: src/test.c
-	$(CC) $(CFLAGS_COVERAGE) $(CFLAGS_COMMON) $(CFLAGS) $< -o $@
+	$(CXX) $(CFLAGS_COVERAGE) $(CFLAGS_COMMON) $(CFLAGS) $< -o $@
 
 # Очистка — удаляем всё из каталога build
 clean:

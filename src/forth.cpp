@@ -20,7 +20,7 @@ Forth::Forth(FILE *_input, size_t _memorySize, size_t _stackSize):
 	this->memory = new cell[_memorySize];
 	this->freeMemory = this->memory;
 
-	this->sp0 = new cell[_memorySize];
+	this->sp0 = new cell[_stackSize];
 	this->stackPointer = this->sp0;
 	this->latest = NULL;
 	
