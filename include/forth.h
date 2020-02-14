@@ -9,7 +9,7 @@
 // struct forth;
 typedef intptr_t cell;
 
-typedef void (*function)(struct forth *forth);
+typedef void (*function)(Forth* forth); // TODO
 
 enum ForthResult {
     FORTH_OK,
@@ -17,6 +17,8 @@ enum ForthResult {
     FORTH_WORD_NOT_FOUND,
     FORTH_BUFFER_OVERFLOW,
 };
+
+class ForthException{}; // TODO
 
 class Word{
 	private:
@@ -47,6 +49,8 @@ class Forth{
 		cell *sp0;
 		size_t memorySize;
 		size_t dataSize;
+
+		void runNumber(const char *wordBuffer, size_t length);
 	public:
 		Forth(FILE *_input, size_t _memorySize, size_t stackSize);
 		~Forth();
@@ -58,9 +62,11 @@ class Forth{
 		ForthResult run();
 
 		Word* addWord(const char *name, uint8_t length);
+
+		// Default words from words.h  TODO
 };
 
 void printCell(cell c);
 
 ForthResult readWord(FILE* source,
-    char* buffer, size_t bufferSize, size_t *length);
+    char* buffer, size_t bufferSize, size_t* length);
