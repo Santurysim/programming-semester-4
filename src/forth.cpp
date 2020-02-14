@@ -56,7 +56,8 @@ void Forth::emit(cell value){
 }
 
 Word* Forth::addWord(const char *name, uint8_t length){
-	// TODO
+	Word word(name, length, this->latest);
+
 }
 
 struct word* word_add(struct forth *forth,

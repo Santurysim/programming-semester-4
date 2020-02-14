@@ -27,9 +27,10 @@ class Word{
 		char *name;
 	public:
 		Word();
+		Word(char *_name, uint8_t _length, Word *_next = NULL);
 		~Word();
 		Word* getNextWord() const;
-		uint8_t getLength() const;
+		uint8_t getNameLength() const;
 		char* getName() const;
 		const void* getCode() const;
 		const Word* find(char *name, uint8_t length) const;
