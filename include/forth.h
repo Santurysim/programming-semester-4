@@ -11,29 +11,32 @@ typedef intptr_t cell;
 
 typedef void (*function)(Forth* forth); // TODO
 
-enum ForthResult {
-    FORTH_OK,
-    FORTH_EOF,
-    FORTH_WORD_NOT_FOUND,
-    FORTH_BUFFER_OVERFLOW,
+struct word {
+    struct word *next;
+    bool compiled;
+    bool hidden;
+    bool immediate;
+    uint8_t length;
+    char name[];
 };
 
-class ForthException{}; // TODO
+struct forth {
+    struct word **executing;
+    cell *sp;
+    cell *rp;
+    cell *memory;
+    struct word *latest;
+    struct word *stopword;
+    bool is_compiling;
 
-class Word{
-	private:
-		Word *next;
-		uint8_t length;
-		char *name;
-	public:
-		Word();
-		~Word();
-		Word* getNextWord() const;
-		uint8_t getLength() const;
-		char* getName() const;
-		const void* getCode() const;
-		const Word* find(char *name, uint8_t length) const;
-		// TODO
+    FILE* input;
+
+    cell *memory_free;
+    cell *sp0;
+    cell *rp0;
+    size_t memory_size;
+    size_t return_size;
+    size_t data_size;
 };
 
 class Forth{
@@ -45,21 +48,20 @@ class Forth{
     
 		FILE* input;
 
-		cell *freeMemory;
-		cell *sp0;
-		size_t memorySize;
-		size_t dataSize;
+int forth_init(struct forth *forth, FILE* input,
+    size_t memory, size_t stack, size_t ret);
+void forth_free(struct forth *forth);
 
-		void runNumber(const char *wordBuffer, size_t length);
-	public:
-		Forth(FILE *_input, size_t _memorySize, size_t stackSize);
-		~Forth();
-		void push(cell value);
-		cell pop();
-		cell* top();
-		void emit(cell value);
-		void addCodeword(const char *name, const function handler);
-		ForthResult run();
+void forth_push(struct forth *forth, cell value);
+cell forth_pop(struct forth *forth);
+cell* forth_top(struct forth *forth);
+void forth_push_return(struct forth *forth, cell value);
+cell forth_pop_return(struct forth *forth);
+void forth_emit(struct forth *forth, cell value);
+void forth_add_codeword(struct forth *forth,
+    const char* name, const function handler);
+int forth_add_compileword(struct forth *forth,
+    const char* name, const char** words);
 
 		Word* addWord(const char *name, uint8_t length);
 
