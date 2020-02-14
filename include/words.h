@@ -17,12 +17,25 @@
 // void show(struct forth *forth);
 // void over(struct forth *forth);
 
-// void _true(struct forth *forth);
-// void _false(struct forth *forth);
-// void _xor(struct forth *forth);
-// void _or(struct forth *forth);
-// void _and(struct forth *forth);
-// void _not(struct forth *forth);
-// void lt(struct forth *forth);
-// void _eq(struct forth *forth);
-// void within(struct forth *forth);
+void _true(struct forth *forth);
+void _false(struct forth *forth);
+void _xor(struct forth *forth);
+void _or(struct forth *forth);
+void _and(struct forth *forth);
+void _not(struct forth *forth);
+void lt(struct forth *forth);
+void _eq(struct forth *forth);
+void within(struct forth *forth);
+
+void forth_exit(struct forth *forth);
+void literal(struct forth *forth);
+void compile_start(struct forth *forth);
+void compile_end(struct forth *forth);
+
+void rpush(struct forth *forth);
+void rpop(struct forth *forth);
+void rtop(struct forth *forth);
+void rshow(struct forth *forth);
+
+void next(struct forth *forth);
+void interpreter_stub(struct forth *forth);
