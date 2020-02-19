@@ -20,18 +20,24 @@ enum ForthResult {
 
 class ForthException{}; // TODO
 
+class WordPropertyException: ForthException {};
+
 class Word{
 	private:
 		Word *next;
 		uint8_t length;
-		char *name;
+		char name[];
 	public:
-		Word();
 		Word(char *_name, uint8_t _length, Word *_next = NULL);
-		~Word();
+
 		Word* getNextWord() const;
+		void setNextWord(Word *newWord);
+
 		uint8_t getNameLength() const;
+
 		char* getName() const;
+		void setName(char *newName, uint8_t newLength);
+
 		const void* getCode() const;
 		const Word* find(char *name, uint8_t length) const;
 		// TODO

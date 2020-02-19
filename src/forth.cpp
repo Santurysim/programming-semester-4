@@ -56,21 +56,12 @@ void Forth::emit(cell value){
 }
 
 Word* Forth::addWord(const char *name, uint8_t length){
-	Word word(name, length, this->latest);
-
-}
-
-struct word* word_add(struct forth *forth,
-    uint8_t length, const char name[length])
-{
-    struct word* word = (struct word*)forth->memory_free;
-    word->next = forth->latest;
-    word->length = length;
-    memcpy(word->name, name, length);
-    forth->memory_free = (cell*)word_code(word);
-    assert((char*)forth->memory_free >= word->name + length);
-    forth->latest = word;
-    return word;
+	Word *word = reinterpret_cast<Word*>(this->freeMemory);
+	word->setNextWord(this->latest);
+	word->setName(name, length);
+    assert((char*)this->freeMemory >= word->getName() + length);
+	this->latest = word;
+	return word;
 }
 
 ForthResult Forth::run(){
@@ -110,7 +101,33 @@ void Forth::addCodeword(const char *name. const function handler){
 
 // Word class
 
-// Constructor, desctructor: TODO
+Word:Word(char *_name, uint8_t _length, Word *_next = NULL):
+	length(_length), next(_next) {
+	memcpy(this->name, _name, _length);
+}
+
+Word* Word::getNextWord() const {
+	return this->next;
+}
+
+void Word::setNextWord(Word *newWord){
+	this->next = newWord;
+}
+
+uint8_t Word::getNameLength() const{
+	return this->length;
+}
+
+char* Word::getName() const{
+	return this->name;
+}
+
+void setName(char *newName, uint8_t newLength){
+	if(newLength > this->length)
+		throw WordPropertyException();
+	memcpy(this->name, newName, newLength);
+	this->length = newLength;
+}
 
 const void* Word::getCode() const {
 	uintptr_t size align(sizeof(Word) + 1 + this->length, sizeof(cell));
@@ -290,5 +307,18 @@ const struct word* word_find(const struct word* word,
         word = word->next;
     }
     return NULL;
+}
+
+struct word* word_add(struct forth *forth,
+    uint8_t length, const char name[length])
+{
+    struct word* word = (struct word*)forth->memory_free;
+    word->next = forth->latest;
+    word->length = length;
+    memcpy(word->name, name, length);
+    forth->memory_free = (cell*)word_code(word);
+    assert((char*)forth->memory_free >= word->name + length);
+    forth->latest = word;
+    return word;
 }
 */
