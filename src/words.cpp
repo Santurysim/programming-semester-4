@@ -5,168 +5,167 @@
 
 #include "words.h"
 
-void words_add(struct forth *forth)
-{
-    forth_add_codeword(forth, "drop", drop);
-    forth_add_codeword(forth, "dup", _dup);
-    forth_add_codeword(forth, "+", add);
-    forth_add_codeword(forth, "-", sub);
-    forth_add_codeword(forth, "*", mul);
-    forth_add_codeword(forth, "/", _div);
-    forth_add_codeword(forth, "%", mod);
-    forth_add_codeword(forth, "swap", swap);
-    forth_add_codeword(forth, "rot", rot);
-    forth_add_codeword(forth, "-rot", rot_back);
-    forth_add_codeword(forth, "show", show);
-    forth_add_codeword(forth, "over", over);
-    forth_add_codeword(forth, "true", _true);
-    forth_add_codeword(forth, "false", _false);
-    forth_add_codeword(forth, "xor", _xor);
-    forth_add_codeword(forth, "or", _or);
-    forth_add_codeword(forth, "and", _and);
-    forth_add_codeword(forth, "not", _not);
-    forth_add_codeword(forth, "=", _eq);
-    forth_add_codeword(forth, "<", lt);
-    forth_add_codeword(forth, "within", within);
+void addWords(Forth &forth){
+    forth.addCodeword("drop", drop);
+    forth.addCodeword("dup", _dup);
+    forth.addCodeword("+", add);
+    forth.addCodeword("-", sub);
+    forth.addCodeword("*", mul);
+    forth.addCodeword("/", _div);
+    forth.addCodeword("%", mod);
+    forth.addCodeword("swap", swap);
+    forth.addCodeword("rot", rot);
+    forth.addCodeword("-rot", rot_back);
+    forth.addCodeword("show", show);
+    forth.addCodeword("over", over);
+    forth.addCodeword("true", _true);
+    forth.addCodeword("false", _false);
+    forth.addCodeword("xor", _xor);
+    forth.addCodeword("or", _or);
+    forth.addCodeword("and", _and);
+    forth.addCodeword("not", _not);
+    forth.addCodeword("=", _eq);
+    forth.addCodeword("<", lt);
+    forth.addCodeword("within", within);
 }
 
-void drop(struct forth *forth) {
-    forth_pop(forth);
+void drop(Forth &forth) {
+    forth.pop();
 }
 
-void _dup(struct forth *forth) {
-    forth_push(forth, *forth_top(forth));
+void _dup(Forth &forth) {
+    forth.push(*forth.top());
 }
 
-void add(struct forth *forth) {
+void add(Forth &forth) {
     cell a, b;
-    b = forth_pop(forth);
-    a = forth_pop(forth);
-    forth_push(forth, a + b);
+    b = forth.pop();
+    a = forth.pop();
+    forth.push(a + b);
 }
 
-void sub(struct forth *forth) {
+void sub(Forth &forth) {
     cell a, b;
-    b = forth_pop(forth);
-    a = forth_pop(forth);
-    forth_push(forth, a - b);
+    b = forth.pop();
+    a = forth.pop();
+    forth.push(a - b);
 }
 
-void mul(struct forth *forth) {
+void mul(Forth &forth) {
     cell a, b;
-    b = forth_pop(forth);
-    a = forth_pop(forth);
-    forth_push(forth, a * b);
+    b = forth.pop();
+    a = forth.pop();
+    forth.push(a * b);
 }
 
-void _div(struct forth *forth) {
+void _div(Forth &forth) {
     cell a, b;
-    b = forth_pop(forth);
-    a = forth_pop(forth);
-    forth_push(forth, a / b);
+    b = forth.pop();
+    a = forth.pop();
+    forth.push(a / b);
 }
 
-void mod(struct forth *forth) {
+void mod(Forth &forth) {
     cell a, b;
-    b = forth_pop(forth);
-    a = forth_pop(forth);
-    forth_push(forth, a % b);
+    b = forth.pop();
+    a = forth.pop();
+    forth.push(a % b);
 }
 
-void swap(struct forth *forth) {
+void swap(Forth &forth) {
     cell a, b;
-    b = forth_pop(forth);
-    a = forth_pop(forth);
-    forth_push(forth, b);
-    forth_push(forth, a);
+    b = forth.pop();
+    a = forth.pop();
+    forth.push(b);
+    forth.push(a);
 }
 
-void rot_back(struct forth *forth) {
+void rot_back(Forth &forth) {
     cell a, b, c;
-    c = forth_pop(forth);
-    b = forth_pop(forth);
-    a = forth_pop(forth);
-    forth_push(forth, c);
-    forth_push(forth, a);
-    forth_push(forth, b);
+    c = forth.pop();
+    b = forth.pop();
+    a = forth.pop();
+    forth.push(c);
+    forth.push(a);
+    forth.push(b);
 }
 
-void rot(struct forth *forth) {
+void rot(Forth &forth) {
     cell a, b, c;
-    c = forth_pop(forth);
-    b = forth_pop(forth);
-    a = forth_pop(forth);
-    forth_push(forth, b);
-    forth_push(forth, c);
-    forth_push(forth, a);
+    c = forth.pop();
+    b = forth.pop();
+    a = forth.pop();
+    forth.push(b);
+    forth.push(c);
+    forth.push(a);
 }
 
-void show(struct forth *forth) {
-    const cell *c = forth->sp0;
-    while (c <= forth_top(forth)) {
-        cell_print(*c);
+void show(Forth &forth) {
+    const cell *c = forth.getSp0();
+    while (c <= forth.top()) {
+        printCell(*c);
         c += 1;
     }
     printf("(top)\n");
 }
 
-void over(struct forth *forth) {
-    assert(forth_top(forth) - 1 >= forth->sp0);
-    forth_push(forth, *(forth_top(forth)-1));
+void over(Forth &forth) {
+    assert(forth.top() - 1 >= forth.getSp0());
+    forth.push(*(forth.top()-1));
 }
 
-void _true(struct forth *forth) {
-    forth_push(forth, -1);
+void _true(Forth &forth) {
+    forth.push(-1);
 }
 
-void _false(struct forth *forth) {
-    forth_push(forth, 0);
+void _false(Forth &forth) {
+    forth.push(0);
 }
 
-void _xor(struct forth *forth) {
+void _xor(Forth &forth) {
     cell a, b;
-    b = forth_pop(forth);
-    a = forth_pop(forth);
-    forth_push(forth, a ^ b);
+    b = forth.pop();
+    a = forth.pop();
+    forth.push(a ^ b);
 }
 
-void _or(struct forth *forth) {
+void _or(Forth &forth) {
     cell a, b;
-    b = forth_pop(forth);
-    a = forth_pop(forth);
-    forth_push(forth, a | b);
+    b = forth.pop();
+    a = forth.pop();
+    forth.push(a | b);
 }
 
-void _and(struct forth *forth) {
+void _and(Forth &forth) {
     cell a, b;
-    b = forth_pop(forth);
-    a = forth_pop(forth);
-    forth_push(forth, a & b);
+    b = forth.pop();
+    a = forth.pop();
+    forth.push(a & b);
 }
 
-void _not(struct forth *forth) {
-    cell c = forth_pop(forth);
-    forth_push(forth, ~c);
+void _not(Forth &forth) {
+    cell c = forth.pop();
+    forth.push(~c);
 }
 
-void _eq(struct forth *forth) {
+void _eq(Forth &forth) {
     cell a, b;
-    b = forth_pop(forth);
-    a = forth_pop(forth);
-    forth_push(forth, a == b ? -1 : 0);
+    b = forth.pop();
+    a = forth.pop();
+    forth.push(a == b ? -1 : 0);
 }
 
-void lt(struct forth *forth) {
+void lt(Forth &forth) {
     cell a, b;
-    b = forth_pop(forth);
-    a = forth_pop(forth);
-    forth_push(forth, a < b ? -1 : 0);
+    b = forth.pop();
+    a = forth.pop();
+    forth.push(a < b ? -1 : 0);
 }
 
-void within(struct forth *forth) {
+void within(Forth &forth) {
     cell a, l, r;
-    r = forth_pop(forth);
-    l = forth_pop(forth);
-    a = forth_pop(forth);
-    forth_push(forth, l <= a && a < r ? -1 : 0);
+    r = forth.pop();
+    l = forth.pop();
+    a = forth.pop();
+    forth.push(l <= a && a < r ? -1 : 0);
 }

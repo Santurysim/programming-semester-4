@@ -6,10 +6,10 @@
 
 #define MAX_WORD 32
 
-// struct forth;
+class Forth;
 typedef intptr_t cell;
 
-typedef void (*function)(Forth* forth); // TODO
+typedef void (*function)(Forth&); // TODO
 
 enum ForthResult {
     FORTH_OK,
@@ -35,11 +35,11 @@ class Word{
 
 		uint8_t getNameLength() const;
 
-		char* getName() const;
-		void setName(char *newName, uint8_t newLength);
+		const char* getName() const;
+		void setName(const char *newName, uint8_t newLength);
 
 		const void* getCode() const;
-		const Word* find(char *name, uint8_t length) const;
+		const Word* find(const char *name, uint8_t length) const;
 		// TODO
 };
 
@@ -70,7 +70,11 @@ class Forth{
 
 		Word* addWord(const char *name, uint8_t length);
 
-		// Default words from words.h  TODO
+		cell* getSp0() const;
+		cell* getStackPointer() const;
+		cell* getMemory() const;
+		cell* getFreeMemory() const;
+		Word* getLatest() const;
 };
 
 void printCell(cell c);

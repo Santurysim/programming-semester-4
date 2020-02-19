@@ -43,7 +43,7 @@ void Forth::push(cell value){
 cell Forth::pop(){
 	assert(this->stackPointer > this->sp0);
 	this->stackPointer -= 1;
-	return this->stackPointer;
+	return *this->stackPointer;
 }
 
 cell* Forth::top(){
@@ -70,12 +70,12 @@ ForthResult Forth::run(){
 	char wordBuffer[MAX_WORD + 1] = {0};
 	while((readResult = readWord(this->input, wordBuffer, 
 					sizeof(wordBuffer), &length)) == FORTH_OK){
-		const Word *word = this->latest.find(wordBuffer, length);
+		const Word *word = this->latest->find(wordBuffer, length);
 		if(!word)
 			this->runNumber(wordBuffer, length);
 		else{
             // ISO C forbids conversion of object pointer to function pointer type
-            const function code = ((struct { function fn; }*)word->getCode())->fn; // TODO
+            const function code = (function)word->getCode(); // TODO
 		}
 	}
 	return readResult;
@@ -91,17 +91,37 @@ void Forth::runNumber(const char *wordBuffer, size_t length){
 		this->push(number);
 }
 
-void Forth::addCodeword(const char *name. const function handler){
+void Forth::addCodeword(const char *name, const function handler){
 	this->addWord(name, strlen(name));
 	assert(strlen(name) < 32);
-	this->emit(forth(cell)handler);
+	this->emit((cell)handler);
+}
+
+cell* Forth::getSp0() const{
+    return this->sp0;
+}
+
+cell* Forth::getStackPointer() const{
+    return this->stackPointer;
+}
+
+cell* Forth::getMemory() const{
+    return this->memory;
+}
+
+cell* Forth::getFreeMemory() const{
+    return this->freeMemory;
+}
+
+Word* Forth::getLatest() const{
+    return this->latest;
 }
 
 // End of Forth implementation
 
 // Word class
 
-Word:Word(char *_name, uint8_t _length, Word *_next = NULL):
+Word::Word(char *_name, uint8_t _length, Word *_next):
 	length(_length), next(_next) {
 	memcpy(this->name, _name, _length);
 }
@@ -118,11 +138,11 @@ uint8_t Word::getNameLength() const{
 	return this->length;
 }
 
-char* Word::getName() const{
+const char* Word::getName() const{
 	return this->name;
 }
 
-void setName(char *newName, uint8_t newLength){
+void Word::setName(const char *newName, uint8_t newLength){
 	if(newLength > this->length)
 		throw WordPropertyException();
 	memcpy(this->name, newName, newLength);
@@ -130,17 +150,17 @@ void setName(char *newName, uint8_t newLength){
 }
 
 const void* Word::getCode() const {
-	uintptr_t size align(sizeof(Word) + 1 + this->length, sizeof(cell));
+	uintptr_t size = align(sizeof(Word) + 1 + this->length, sizeof(cell));
 	return (const void*)((uint8_t*)this + size);
 }
 
 const Word* Word::find(const char *name, uint8_t length) const {
-	Word *word = this;
+	const Word *word = this;
 	while(word){
 		if(length == word->length && !strncmp(word->name, name, length)){
 			return word;
 		}
-		word = word->next;
+		word = (const Word*)word->next;
 	}
 	return NULL;
 }

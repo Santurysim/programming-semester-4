@@ -53,10 +53,10 @@ CFLAGS_COVERAGE = -fprofile-arcs -ftest-coverage -fPIC
 #     для файлов вида build/(что-то).c.o
 #     основная зависимость — src/(что-то).c
 # $< — первая зависимость в списке (ещё есть зависимости из DEPS)
-build/%.c.o: src/%.c
+build/%.cpp.o: src/%.cpp
 	$(CXX) $(CFLAGS_COMMON) $(CFLAGS) -c $< -o $@
 
-build/test: src/test.c
+build/test: src/test.cpp
 	$(CXX) $(CFLAGS_COVERAGE) $(CFLAGS_COMMON) $(CFLAGS) $< -o $@
 
 # Очистка — удаляем всё из каталога build
