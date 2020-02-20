@@ -35,7 +35,7 @@ Forth::~Forth(){
 
 void Forth::push(cell value){
 	// code and data should not intersect?
-	assert(this->stackPointer < this->sp0 + this->dataSize);
+	assert(this->stackPointer < this->sp0 + this->dataSize); // TODO
 	*(this->stackPointer) = value;
 	this->stackPointer += 1;
 }
@@ -59,7 +59,7 @@ Word* Forth::addWord(const char *name, uint8_t length){
 	Word *word = reinterpret_cast<Word*>(this->freeMemory);
 	word->setNextWord(this->latest);
 	word->setName(name, length);
-    this->freeMemory = (cell*)word->getCode();
+    this->freeMemory = (cell*)(word->getCode());
     assert((char*)this->freeMemory >= word->getName() + length);
 	this->latest = word;
 	return word;
@@ -76,6 +76,7 @@ ForthResult Forth::run(){
 			this->runNumber(wordBuffer, length);
 		else{
             // ISO C forbids conversion of object pointer to function pointer type
+            // But C++ does not
             const function code = (function)word->getCode(); // TODO
 			code(*this);
 		}

@@ -27,6 +27,7 @@ class Word{
 		Word *next;
 		uint8_t length;
 		char name[];
+
 	public:
 		Word(char *_name, uint8_t _length, Word *_next = NULL);
 
