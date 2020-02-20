@@ -1,5 +1,5 @@
 #include "minunit.h"
-#include "forth.test.c"
+#include "forth.test.cpp"
 
 int main(void) {
 	MU_RUN_SUITE(forth_tests);

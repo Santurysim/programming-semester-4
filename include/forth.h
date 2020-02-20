@@ -34,6 +34,7 @@ class Word{
 		void setNextWord(Word *newWord);
 
 		uint8_t getNameLength() const;
+		void setNameLength(uint8_t newLength);
 
 		const char* getName() const;
 		void setName(const char *newName, uint8_t newLength);

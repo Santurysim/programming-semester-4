@@ -59,6 +59,7 @@ Word* Forth::addWord(const char *name, uint8_t length){
 	Word *word = reinterpret_cast<Word*>(this->freeMemory);
 	word->setNextWord(this->latest);
 	word->setName(name, length);
+    this->freeMemory = (cell*)word->getCode();
     assert((char*)this->freeMemory >= word->getName() + length);
 	this->latest = word;
 	return word;
@@ -143,8 +144,8 @@ const char* Word::getName() const{
 }
 
 void Word::setName(const char *newName, uint8_t newLength){
-	if(newLength > this->length)
-		throw WordPropertyException();
+//	if(newLength > this->length)
+//		throw WordPropertyException();
 	memcpy(this->name, newName, newLength);
 	this->length = newLength;
 }
@@ -163,6 +164,10 @@ const Word* Word::find(const char *name, uint8_t length) const {
 		word = (const Word*)word->next;
 	}
 	return NULL;
+}
+
+void Word::setNameLength(uint8_t newLength){
+	this->length = newLength;
 }
 
 // End of Word implementation

@@ -1,5 +1,5 @@
-#include "forth.c"
-#include "words.c"
+#include "forth.cpp"
+#include "words.cpp"
 #include "minunit.h"
 
 MU_TEST(forth_tests_init_free) {
@@ -39,18 +39,18 @@ MU_TEST(forth_tests_codeword) {
 
     mu_check(forth.getLatest() == NULL);
 
-    struct word *w1 = forth.addWord("TEST1", strlen("TEST1"));
+    Word *w1 = forth.addWord("TEST1", strlen("TEST1"));
     forth.emit(123);
     mu_check(forth.getLatest() == w1);
 
-    struct word *w2 = forth.addWord("TEST2", strlen("TEST2"));
-    mu_check((*(cell*)w1.getCode()) == 123);
-    mu_check((void*)w2 > w1.getCode());
+    Word *w2 = forth.addWord("TEST2", strlen("TEST2"));
+    mu_check((*(cell*)w1->getCode()) == 123);
+    mu_check((void*)w2 > w1->getCode());
     mu_check(forth.getLatest() == w2);
 
-    mu_check(forth.getLatest().find("TEST1", strlen("TEST1")) == w1);
-    mu_check(forth.getLatest().find("TEST2", strlen("TEST2")) == w2);
-    mu_check(forth.getLatest().find("TEST", strlen("TEST")) == NULL);
+    mu_check(forth.getLatest()->find("TEST1", strlen("TEST1")) == w1);
+    mu_check(forth.getLatest()->find("TEST2", strlen("TEST2")) == w2);
+    mu_check(forth.getLatest()->find("TEST", strlen("TEST")) == NULL);
 }
 
 MU_TEST_SUITE(forth_tests) {
