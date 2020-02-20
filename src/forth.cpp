@@ -77,6 +77,7 @@ ForthResult Forth::run(){
 		else{
             // ISO C forbids conversion of object pointer to function pointer type
             const function code = (function)word->getCode(); // TODO
+			code(*this);
 		}
 	}
 	return readResult;
