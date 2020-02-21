@@ -34,7 +34,7 @@ Forth::~Forth(){
 }
 
 void Forth::push(cell value){
-	// code and data should not intersect?
+	// Ensure we have room for new data
 	assert(this->stackPointer < this->sp0 + this->dataSize); // TODO
 	*(this->stackPointer) = value;
 	this->stackPointer += 1;
@@ -77,7 +77,7 @@ ForthResult Forth::run(){
 		else{
             // ISO C forbids conversion of object pointer to function pointer type
             // But C++ does not
-            const function code = (function)word->getCode(); // TODO
+            const function code = *(function*)word->getCode();
 			code(*this);
 		}
 	}
@@ -89,7 +89,7 @@ void Forth::runNumber(const char *wordBuffer, size_t length){
 	char *end;
 	intptr_t number = strtoiptr(wordBuffer, &end, 10); // TODO
 	if(end - wordBuffer < (int)length){
-		fprintf(stderr, "Unknown word: '%.*s'\n", (int)length, wordBuffer); // WTF
+		fprintf(stderr, "Unknown word: '%.*s'\n", (int)length, wordBuffer);
 	} else
 		this->push(number);
 }
