@@ -2,3 +2,4 @@ build
 *.gc*
 .vscode
 *~
+doc

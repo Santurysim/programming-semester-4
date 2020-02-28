@@ -85,3 +85,6 @@ coverage: build/test check
 
 build:
 	mkdir -p build
+
+doc:
+	doxygen doxygen.conf
