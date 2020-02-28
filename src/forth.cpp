@@ -1,5 +1,3 @@
-#include "forth.h"
-#include <assert.h>
 #include <ctype.h>
 #include <inttypes.h>
 #include <iso646.h>
@@ -8,6 +6,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "forth.h"
+
 static uintptr_t align(uintptr_t value, uint8_t alignment);
 static intptr_t strtoiptr(const char* ptr, char** endptr, int base);
 
@@ -15,33 +15,41 @@ static intptr_t strtoiptr(const char* ptr, char** endptr, int base);
 
 // Forth class
 
+// Constructor and destructor
+
 Forth::Forth(FILE *_input, size_t _memorySize, size_t _stackSize):
 	input(_input), memorySize(_memorySize), dataSize(_stackSize){
 	this->memory = new cell[_memorySize];
 	this->freeMemory = this->memory;
 
-	this->sp0 = new cell[_stackSize];
-	this->stackPointer = this->sp0;
+	this->stackBottom = new cell[_stackSize];
+	this->stackPointer = this->stackBottom;
 	this->latest = NULL;
 	
-	if(!(this->memory) || !(this->sp0))
+	if(!(this->memory) || !(this->stackBottom))
 		throw ForthException();
 }
 
 Forth::~Forth(){
-	delete [] this->sp0;
+	delete [] this->stackBottom;
 	delete [] this->memory;
 }
 
+// Data stack management
+
 void Forth::push(cell value){
 	// Ensure we have room for new data
-	assert(this->stackPointer < this->sp0 + this->dataSize); // TODO
+	if(this->stackPointer == this->stackBottom + this->dataSize)
+		throw ForthOutOfMemoryException();
 	*(this->stackPointer) = value;
 	this->stackPointer += 1;
 }
 
 cell Forth::pop(){
-	assert(this->stackPointer > this->sp0);
+	if (this->stackPointer == this->stackBottom){
+		throw ForthEmptyStackException();
+	}
+	
 	this->stackPointer -= 1;
 	return *this->stackPointer;
 }
@@ -50,26 +58,36 @@ cell* Forth::top(){
 	return this->stackPointer - 1;
 }
 
+// Word management
+
+void Forth::addCodeword(const char *name, const function handler){
+	if(strlen(name) >= 32)
+		throw ForthIllegalArgumentException();
+	if((uint8_t*)this->freeMemory + align(sizeof(Word) + 1 + strlen(name), sizeof(cell)) >
+		(uint8_t*)(this->memory + this->memorySize)){
+		throw ForthOutOfMemoryException();
+	}
+	this->addWord(name, strlen(name));
+	this->emit((cell)handler);
+}
+
 void Forth::emit(cell value){
 	*(this->freeMemory) = value;
 	this->freeMemory += 1;
 }
 
 Word* Forth::addWord(const char *name, uint8_t length){
-	//if ((char*)this->freeMemory + 1 + sizeof(Word) + length) 
-	Word newWord();
+	Word newWord;
 	Word *word = reinterpret_cast<Word*>(this->freeMemory);
 	*word = newWord;
 	word->setNextWord(this->latest);
 	word->setName(name, length);
     this->freeMemory = (cell*)(word->getCode());
-	if((char*)this->freeMemory >= word->getName() + length){
-		throw ForthException();
-	}
-    assert((char*)this->freeMemory >= word->getName() + length);
 	this->latest = word;
 	return word;
 }
+
+// Executing
 
 ForthResult Forth::run(){
 	size_t length;
@@ -100,14 +118,8 @@ void Forth::runNumber(const char *wordBuffer, size_t length){
 		this->push(number);
 }
 
-void Forth::addCodeword(const char *name, const function handler){
-	this->addWord(name, strlen(name));
-	assert(strlen(name) < 32);
-	this->emit((cell)handler);
-}
-
-cell* Forth::getSp0() const{
-    return this->sp0;
+cell* Forth::getStackBottom() const{
+    return this->stackBottom;
 }
 
 cell* Forth::getStackPointer() const{
@@ -172,7 +184,7 @@ const void* Word::getCode() const {
 const Word* Word::find(const char *name, uint8_t length) const {
 	const Word *word = this;
 	while(word){
-		if(length == word->length && !strncmp(word->name, name, length)){
+		if(length == word->length && !strncmp(word->getName(), name, length)){
 			return word;
 		}
 		word = (const Word*)word->next;
@@ -180,16 +192,12 @@ const Word* Word::find(const char *name, uint8_t length) const {
 	return NULL;
 }
 
-void Word::setNameLength(uint8_t newLength){
-	this->length = newLength;
-}
-
 // End of Word implementation
 
 // Miscellaneous functions
 
 void printCell(cell c) {
-    printf("%"PRIdPTR" ", c);
+    printf("%" PRIdPTR " ", c);
 }
 
 ForthResult readWord(FILE* source,

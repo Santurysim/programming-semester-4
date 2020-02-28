@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -101,7 +100,7 @@ void rot(Forth &forth) {
 }
 
 void show(Forth &forth) {
-    const cell *c = forth.getSp0();
+    const cell *c = forth.getStackBottom();
     while (c <= forth.top()) {
         printCell(*c);
         c += 1;
@@ -110,7 +109,8 @@ void show(Forth &forth) {
 }
 
 void over(Forth &forth) {
-    assert(forth.top() - 1 >= forth.getSp0());
+    if(forth.top() - 1 < forth.getStackBottom())
+        throw ForthIllegalStateException();
     forth.push(*(forth.top()-1));
 }
 

@@ -7,8 +7,8 @@ MU_TEST(forth_tests_init_free) {
     
     mu_check(forth.getMemory() == forth.getFreeMemory());
     mu_check(forth.getMemory() != NULL);
-    mu_check(forth.getSp0() == forth.getStackPointer());
-    mu_check(forth.getSp0() != NULL);
+    mu_check(forth.getStackBottom() == forth.getStackPointer());
+    mu_check(forth.getStackBottom() != NULL);
 }
 
 MU_TEST(forth_tests_align) {
@@ -21,9 +21,9 @@ MU_TEST(forth_tests_push_pop) {
     Forth forth(stdin, 100, 100);
     forth.push(123);
 
-    mu_check(forth.getStackPointer() > forth.getSp0());
+    mu_check(forth.getStackPointer() > forth.getStackBottom());
     mu_check(forth.pop() == 123);
-    mu_check(forth.getSp0() == forth.getStackPointer());
+    mu_check(forth.getStackBottom() == forth.getStackPointer());
 }
 
 MU_TEST(forth_tests_emit) {

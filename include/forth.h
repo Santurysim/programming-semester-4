@@ -15,12 +15,20 @@ enum ForthResult {
     FORTH_OK,
     FORTH_EOF,
     FORTH_WORD_NOT_FOUND,
-    FORTH_BUFFER_OVERFLOW,
+    FORTH_BUFFER_OVERFLOW
 };
 
 class ForthException{}; // TODO
 
 class WordPropertyException: ForthException {};
+
+class ForthIllegalArgumentException: ForthException {};
+
+class ForthOutOfMemoryException: ForthException {};
+
+class ForthIllegalStateException: ForthException {};
+
+class ForthEmptyStackException: ForthException {};
 
 class Word{
 	private:
@@ -54,7 +62,7 @@ class Forth{
 		FILE* input;
 
 		cell *freeMemory;
-		cell *sp0;
+		cell *stackBottom;
 		size_t memorySize;
 		size_t dataSize;
 
@@ -71,7 +79,7 @@ class Forth{
 
 		Word* addWord(const char *name, uint8_t length);
 
-		cell* getSp0() const;
+		cell* getStackBottom() const;
 		cell* getStackPointer() const;
 		cell* getMemory() const;
 		cell* getFreeMemory() const;
