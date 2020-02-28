@@ -9,7 +9,7 @@
 class Forth;
 typedef intptr_t cell;
 
-typedef void (*function)(Forth&); // TODO
+typedef void (*function)(Forth&);
 
 enum ForthResult {
     FORTH_OK,
@@ -33,6 +33,9 @@ class ForthEmptyStackException: ForthException {};
 class Word{
 	private:
 		Word *next;
+		bool compiled;
+   		bool hidden;
+		bool immediate;
 		uint8_t length;
 
 	public:
@@ -54,8 +57,12 @@ class Word{
 
 class Forth{
 	private:
+	    Word **executing;
+    	cell *returnPointer;
 		cell *stackPointer;
 		cell *memory;
+
+		bool compiling;
 
 		Word *latest;
     
@@ -63,10 +70,13 @@ class Forth{
 
 		cell *freeMemory;
 		cell *stackBottom;
+		cell *returnBottom;
 		size_t memorySize;
 		size_t dataSize;
+		size_t returnSize;
 
 		void runNumber(const char *wordBuffer, size_t length);
+		void runWord(const Word*);
 	public:
 		Forth(FILE *_input, size_t _memorySize, size_t stackSize);
 		~Forth();
@@ -84,6 +94,15 @@ class Forth{
 		cell* getMemory() const;
 		cell* getFreeMemory() const;
 		Word* getLatest() const;
+
+		void addBaseWords();
+
+		void setInput(FILE*); // TODO
+
+		void pushReturn(cell);
+		cell popReturn();
+
+		int addCompiledWord(const char*, const char**);
 };
 
 void printCell(cell c);
