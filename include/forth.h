@@ -26,16 +26,15 @@ class Word{
 	private:
 		Word *next;
 		uint8_t length;
-		char name[];
 
 	public:
-		Word(char *_name, uint8_t _length, Word *_next = NULL);
+		Word();
 
 		Word* getNextWord() const;
 		void setNextWord(Word *newWord);
 
 		uint8_t getNameLength() const;
-		void setNameLength(uint8_t newLength);
+		// void setNameLength(uint8_t newLength);
 
 		const char* getName() const;
 		void setName(const char *newName, uint8_t newLength);
