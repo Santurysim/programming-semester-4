@@ -17,14 +17,20 @@ static intptr_t strtoiptr(const char* ptr, char** endptr, int base);
 
 // Constructor and destructor
 
-Forth::Forth(FILE *_input, size_t _memorySize, size_t _stackSize):
-	input(_input), memorySize(_memorySize), dataSize(_stackSize){
+Forth::Forth(FILE *_input, size_t _memorySize, size_t _stackSize, size_t _returnStackSize):
+	input(_input), memorySize(_memorySize), dataSize(_stackSize), returnStackSize(_returnStackSize){
 	this->memory = new cell[_memorySize];
 	this->freeMemory = this->memory;
 
 	this->stackBottom = new cell[_stackSize];
 	this->stackPointer = this->stackBottom;
+
+	this->returnStackBottom = new cell[_returnStackSize];
+	this->returnStackPointer = this->returnStackBottom;
+
 	this->latest = NULL;
+	this->executing = NULL;
+	this->compiling = false;
 	
 	if(!(this->memory) || !(this->stackBottom))
 		throw ForthException();
@@ -33,6 +39,7 @@ Forth::Forth(FILE *_input, size_t _memorySize, size_t _stackSize):
 Forth::~Forth(){
 	delete [] this->stackBottom;
 	delete [] this->memory;
+	delete [] this->returnStackBottom;
 }
 
 // Data stack management
@@ -77,14 +84,27 @@ void Forth::emit(cell value){
 }
 
 Word* Forth::addWord(const char *name, uint8_t length){
-	Word newWord;
+	Word newWord(false, false, false, this->latest);
 	Word *word = reinterpret_cast<Word*>(this->freeMemory);
 	*word = newWord;
-	word->setNextWord(this->latest);
 	word->setName(name, length);
     this->freeMemory = (cell*)(word->getCode());
 	this->latest = word;
 	return word;
+}
+
+int Forth::addCompiledWord(const char *name, const char **words){
+	Word *newWord = this->addWord(name, strlen(name));
+	newWord->setCompiled = true;
+	while(*words) {
+		Word *word = this->latest.find(*words, strlen(*words));
+		if(!word) {
+			return 1;
+		}
+		this->emit((cell)word);
+		word += 1;
+	}
+	return 0;
 }
 
 // Executing
@@ -118,9 +138,14 @@ void Forth::runNumber(const char *wordBuffer, size_t length){
 		this->push(number);
 }
 
+// TODO: just mark some word handlers friends
+
 cell* Forth::getStackBottom() const{
     return this->stackBottom;
 }
+
+// For test purposes
+// TODO: remove on macro
 
 cell* Forth::getStackPointer() const{
     return this->stackPointer;
@@ -136,6 +161,22 @@ cell* Forth::getFreeMemory() const{
 
 Word* Forth::getLatest() const{
     return this->latest;
+}
+
+// Return stack management
+
+void Forth::pushReturnStack(cell value){
+	if(this->returnStackPointer == this->returnStackBottom + this->returnStackSize)
+		throw ForthOutOfMemoryException();
+	*(this->returnStackPointer) = value;
+	this->returnStackPointer++;
+}
+
+cell Forth::popReturnStack(){
+	if(this->returnStackPointer == this->returnStackBottom)
+		throw ForthEmptyStackException();
+	this->returnStackPointer--;
+	return *(this->returnStackPointer);
 }
 
 // End of Forth implementation
@@ -184,7 +225,7 @@ const void* Word::getCode() const {
 const Word* Word::find(const char *name, uint8_t length) const {
 	const Word *word = this;
 	while(word){
-		if(length == word->length && !strncmp(word->getName(), name, length)){
+		if(!word->hidden && length == word->length && !strncmp(word->getName(), name, length)){
 			return word;
 		}
 		word = (const Word*)word->next;

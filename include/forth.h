@@ -41,24 +41,33 @@ class Word{
 	public:
 		Word();
 
+		Word(bool _compiled, bool _hidden, bool _immediate, Word *_next);
+
 		Word* getNextWord() const;
 		void setNextWord(Word *newWord);
 
 		uint8_t getNameLength() const;
-		// void setNameLength(uint8_t newLength);
 
 		const char* getName() const;
 		void setName(const char *newName, uint8_t newLength);
 
+		void setCompiled(bool _compiled);
+		bool isCompiled();
+
+		void setHidden(bool _hidden);
+		bool isHidden();
+
+		void setImmediate(bool _immediate);
+		bool isImmediate();
+
 		const void* getCode() const;
 		const Word* find(const char *name, uint8_t length) const;
-		// TODO
 };
 
 class Forth{
 	private:
 	    Word **executing;
-    	cell *returnPointer;
+    	cell *returnStackPointer;
 		cell *stackPointer;
 		cell *memory;
 
@@ -70,15 +79,16 @@ class Forth{
 
 		cell *freeMemory;
 		cell *stackBottom;
-		cell *returnBottom;
+		cell *returnStackBottom;
+
 		size_t memorySize;
 		size_t dataSize;
-		size_t returnSize;
+		size_t returnStackSize;
 
 		void runNumber(const char *wordBuffer, size_t length);
 		void runWord(const Word*);
 	public:
-		Forth(FILE *_input, size_t _memorySize, size_t stackSize);
+		Forth(FILE *_input, size_t _memorySize, size_t _stackSize, size_t _returnStackSize);
 		~Forth();
 		void push(cell value);
 		cell pop();
@@ -99,8 +109,8 @@ class Forth{
 
 		void setInput(FILE*); // TODO
 
-		void pushReturn(cell);
-		cell popReturn();
+		void pushReturnStack(cell);
+		cell popReturnStack();
 
 		int addCompiledWord(const char*, const char**);
 };
