@@ -24,3 +24,28 @@ void _not(Forth &forth);
 void lt(Forth &forth);
 void _eq(Forth &forth);
 void within(Forth &forth);
+
+/*void forth_exit(Forth &forth);
+void literal(Forth &forth);
+void compile_start(Forth &forth);
+void compile_end(Forth &forth);
+
+void rpush(Forth &forth);
+void rpop(Forth &forth);
+void rtop(Forth &forth);
+void rshow(Forth &forth);
+
+void memory_read(Forth &forth);
+void memory_write(Forth &forth);
+void here(Forth &forth);
+void branch(Forth &forth);
+void branch0(Forth &forth);
+void immediate(Forth &forth);
+
+void next_word(Forth &forth);
+void find(Forth &forth);
+void _word_code(Forth &forth);
+void comma(Forth &forth);
+
+void next(Forth &forth);
+void interpreter_stub(Forth &forth);*/

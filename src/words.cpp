@@ -76,7 +76,7 @@ void rot(Forth &forth) {
 }
 
 void show(Forth &forth) {
-    const cell *c = forth.getStackBottom();
+    const cell *c = forth.stackBottom;
     while (c <= forth.top()) {
         printCell(*c);
         c += 1;
@@ -85,7 +85,7 @@ void show(Forth &forth) {
 }
 
 void over(Forth &forth) {
-    if(forth.top() - 1 < forth.getStackBottom())
+    if(forth.top() - 1 < forth.stackBottom)
         throw ForthIllegalStateException();
     forth.push(*(forth.top()-1));
 }

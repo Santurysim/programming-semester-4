@@ -5,9 +5,10 @@
 
 #define MAX_DATA 16384
 #define MAX_STACK 16384
+#define MAX_RETURN 16384
 
 int main(void){
-    Forth forth(stdin, MAX_DATA, MAX_STACK);
+    Forth forth(stdin, MAX_DATA, MAX_STACK, MAX_RETURN);
     forth.addMachineWords();
 	forth.run();
     return 0;

@@ -39,9 +39,7 @@ class Word{
 		uint8_t length;
 
 	public:
-		Word();
-
-		Word(bool _compiled, bool _hidden, bool _immediate, Word *_next);
+		Word(Word *_next=NULL, bool _compiled=false, bool _hidden=false, bool _immediate=false);
 
 		Word* getNextWord() const;
 		void setNextWord(Word *newWord);
@@ -52,13 +50,13 @@ class Word{
 		void setName(const char *newName, uint8_t newLength);
 
 		void setCompiled(bool _compiled);
-		bool isCompiled();
+		bool isCompiled() const;
 
 		void setHidden(bool _hidden);
-		bool isHidden();
+		bool isHidden() const;
 
 		void setImmediate(bool _immediate);
-		bool isImmediate();
+		bool isImmediate() const;
 
 		const void* getCode() const;
 		const Word* find(const char *name, uint8_t length) const;
@@ -66,6 +64,8 @@ class Word{
 
 class Forth{
 	private:
+		friend void show(Forth& forth);
+		friend void over(Forth& Forth);
 	    Word **executing;
     	cell *returnStackPointer;
 		cell *stackPointer;
@@ -74,6 +74,7 @@ class Forth{
 		bool compiling;
 
 		Word *latest;
+		Word *stopWord;
     
 		FILE* input;
 
@@ -97,7 +98,7 @@ class Forth{
 		void addCodeword(const char *name, const function handler);
 		ForthResult run();
 
-		Word* addWord(const char *name, uint8_t length);
+		Word* addWord(const char *name, uint8_t length, bool isCompiled);
 
 		cell* getStackBottom() const;
 		cell* getStackPointer() const;
@@ -109,8 +110,8 @@ class Forth{
 
 		void setInput(FILE*); // TODO
 
-		void pushReturnStack(cell);
-		cell popReturnStack();
+		void pushReturn(cell);
+		cell popReturn();
 
 		int addCompiledWord(const char*, const char**);
 

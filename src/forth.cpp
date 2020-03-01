@@ -44,27 +44,27 @@ Forth::~Forth(){
 }
 
 void Forth::addMachineWords(){
-	forth.addCodeword("drop", drop);
-    forth.addCodeword("dup", _dup);
-    forth.addCodeword("+", add);
-    forth.addCodeword("-", sub);
-    forth.addCodeword("*", mul);
-    forth.addCodeword("/", _div);
-    forth.addCodeword("%", mod);
-    forth.addCodeword("swap", swap);
-    forth.addCodeword("rot", rot);
-    forth.addCodeword("-rot", rot_back);
-    forth.addCodeword("show", show);
-    forth.addCodeword("over", over);
-    forth.addCodeword("true", _true);
-    forth.addCodeword("false", _false);
-    forth.addCodeword("xor", _xor);
-    forth.addCodeword("or", _or);
-    forth.addCodeword("and", _and);
-    forth.addCodeword("not", _not);
-    forth.addCodeword("=", _eq);
-    forth.addCodeword("<", lt);
-    forth.addCodeword("within", within);
+	this->addCodeword("drop", drop);
+    this->addCodeword("dup", _dup);
+    this->addCodeword("+", add);
+    this->addCodeword("-", sub);
+    this->addCodeword("*", mul);
+    this->addCodeword("/", _div);
+    this->addCodeword("%", mod);
+    this->addCodeword("swap", swap);
+    this->addCodeword("rot", rot);
+    this->addCodeword("-rot", rot_back);
+    this->addCodeword("show", show);
+    this->addCodeword("over", over);
+    this->addCodeword("true", _true);
+    this->addCodeword("false", _false);
+    this->addCodeword("xor", _xor);
+    this->addCodeword("or", _or);
+    this->addCodeword("and", _and);
+    this->addCodeword("not", _not);
+    this->addCodeword("=", _eq);
+    this->addCodeword("<", lt);
+    this->addCodeword("within", within);
 }
 
 // Data stack management
@@ -99,7 +99,7 @@ void Forth::addCodeword(const char *name, const function handler){
 		(uint8_t*)(this->memory + this->memorySize)){
 		throw ForthOutOfMemoryException();
 	}
-	this->addWord(name, strlen(name));
+	this->addWord(name, strlen(name), false);
 	this->emit((cell)handler);
 }
 
@@ -108,8 +108,8 @@ void Forth::emit(cell value){
 	this->freeMemory += 1;
 }
 
-Word* Forth::addWord(const char *name, uint8_t length){
-	Word newWord(false, false, false, this->latest);
+Word* Forth::addWord(const char *name, uint8_t length, bool isCompiled){
+	Word newWord(this->latest, isCompiled);
 	Word *word = reinterpret_cast<Word*>(this->freeMemory);
 	*word = newWord;
 	word->setName(name, length);
@@ -119,10 +119,9 @@ Word* Forth::addWord(const char *name, uint8_t length){
 }
 
 int Forth::addCompiledWord(const char *name, const char **words){
-	Word *newWord = this->addWord(name, strlen(name));
-	newWord->setCompiled = true;
+	this->addWord(name, strlen(name), true);
 	while(*words) {
-		Word *word = this->latest.find(*words, strlen(*words));
+		const Word *word = this->latest->find(*words, strlen(*words));
 		if(!word) {
 			return 1;
 		}
@@ -143,12 +142,10 @@ ForthResult Forth::run(){
 		const Word *word = this->latest->find(wordBuffer, length);
 		if(!word)
 			this->runNumber(wordBuffer, length);
-		else{
-            // ISO C forbids conversion of object pointer to function pointer type
-            // But C++ does not
-            const function code = *(function*)word->getCode();
-			code(*this);
-		}
+        else if(word->isImmediate() || !this->compiling)
+            this->runWord(word);
+		else
+            this->emit((cell)word);
 	}
 	return readResult;
 
@@ -159,8 +156,31 @@ void Forth::runNumber(const char *wordBuffer, size_t length){
 	intptr_t number = strtoiptr(wordBuffer, &end, 10); // TODO
 	if(end - wordBuffer < (int)length){
 		fprintf(stderr, "Unknown word: '%.*s'\n", (int)length, wordBuffer);
-	} else
+	} else if(!this->compiling)
 		this->push(number);
+    else{
+        const Word *word = this->latest->find("lit", strlen("lit"));
+        if(!word)
+            throw ForthIllegalStateException();
+        this->emit((cell)word);
+        this->emit(number);
+    }
+}
+
+void Forth::runWord(const Word* word){
+    do{
+        if(*this->executing != this->stopWord)
+            this->executing += 1;
+        if(!word->isCompiled()){
+            // ISO C forbids conversion of object pointer to function pointer type
+            // But C++ does not
+            const function code = *(function*)word->getCode();
+			code(*this);
+        } else{
+            this->pushReturn((cell)this->executing);
+            this->executing = (Word**)word->getCode();
+        }
+    } while(word != this->stopWord);
 }
 
 // TODO: just mark some word handlers friends
@@ -190,14 +210,14 @@ Word* Forth::getLatest() const{
 
 // Return stack management
 
-void Forth::pushReturnStack(cell value){
+void Forth::pushReturn(cell value){
 	if(this->returnStackPointer == this->returnStackBottom + this->returnStackSize)
 		throw ForthOutOfMemoryException();
 	*(this->returnStackPointer) = value;
 	this->returnStackPointer++;
 }
 
-cell Forth::popReturnStack(){
+cell Forth::popReturn(){
 	if(this->returnStackPointer == this->returnStackBottom)
 		throw ForthEmptyStackException();
 	this->returnStackPointer--;
@@ -208,10 +228,8 @@ cell Forth::popReturnStack(){
 
 // Word class
 
-Word::Word(){
-	this->next = NULL;
-	this->length = 0;
-}
+Word::Word(Word *_next, bool _compiled, bool _hidden, bool _immediate):
+    next(_next), compiled(_compiled), hidden(_hidden), immediate(_immediate), length(0){}
 
 //Word::Word(const char *_name, uint8_t _length, Word *_next):
 //	length(_length), next(_next) {
