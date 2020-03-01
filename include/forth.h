@@ -113,6 +113,8 @@ class Forth{
 		cell popReturnStack();
 
 		int addCompiledWord(const char*, const char**);
+
+		void addMachineWords();
 };
 
 void printCell(cell c);

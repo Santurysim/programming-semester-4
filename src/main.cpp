@@ -8,7 +8,7 @@
 
 int main(void){
     Forth forth(stdin, MAX_DATA, MAX_STACK);
-    addWords(forth);
+    forth.addMachineWords();
 	forth.run();
     return 0;
 }

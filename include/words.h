@@ -2,8 +2,6 @@
 
 #include "forth.h"
 
-void addWords(Forth &forth);
-
 void drop(Forth &forth);
 void _dup(Forth &forth);
 void add(Forth &forth);

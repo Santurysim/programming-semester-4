@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "forth.h"
+#include "words.h"
 
 static uintptr_t align(uintptr_t value, uint8_t alignment);
 static intptr_t strtoiptr(const char* ptr, char** endptr, int base);
@@ -40,6 +41,30 @@ Forth::~Forth(){
 	delete [] this->stackBottom;
 	delete [] this->memory;
 	delete [] this->returnStackBottom;
+}
+
+void Forth::addMachineWords(){
+	forth.addCodeword("drop", drop);
+    forth.addCodeword("dup", _dup);
+    forth.addCodeword("+", add);
+    forth.addCodeword("-", sub);
+    forth.addCodeword("*", mul);
+    forth.addCodeword("/", _div);
+    forth.addCodeword("%", mod);
+    forth.addCodeword("swap", swap);
+    forth.addCodeword("rot", rot);
+    forth.addCodeword("-rot", rot_back);
+    forth.addCodeword("show", show);
+    forth.addCodeword("over", over);
+    forth.addCodeword("true", _true);
+    forth.addCodeword("false", _false);
+    forth.addCodeword("xor", _xor);
+    forth.addCodeword("or", _or);
+    forth.addCodeword("and", _and);
+    forth.addCodeword("not", _not);
+    forth.addCodeword("=", _eq);
+    forth.addCodeword("<", lt);
+    forth.addCodeword("within", within);
 }
 
 // Data stack management
