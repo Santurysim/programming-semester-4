@@ -64,12 +64,15 @@ class Word{
 
 class Forth{
 	private:
-		friend void show(Forth& forth);
-		friend void over(Forth& Forth);
+		friend void here(Forth& forth);
 	    Word **executing;
     	cell *returnStackPointer;
 		cell *stackPointer;
 		cell *memory;
+
+		cell *freeMemory;
+		cell *stackBottom;
+		cell *returnStackBottom;
 
 		bool compiling;
 
@@ -77,10 +80,6 @@ class Forth{
 		Word *stopWord;
     
 		FILE* input;
-
-		cell *freeMemory;
-		cell *stackBottom;
-		cell *returnStackBottom;
 
 		size_t memorySize;
 		size_t dataSize;
@@ -91,31 +90,42 @@ class Forth{
 	public:
 		Forth(FILE *_input, size_t _memorySize, size_t _stackSize, size_t _returnStackSize);
 		~Forth();
+		void addMachineWords();
+
 		void push(cell value);
 		cell pop();
 		cell* top();
+
 		void emit(cell value);
 		void addCodeword(const char *name, const function handler);
+		Word* addWord(const char *name, uint8_t length, bool isCompiled);
+		void addBaseWords();
+		int addCompiledWord(const char*, const char**);
+
 		ForthResult run();
 
-		Word* addWord(const char *name, uint8_t length, bool isCompiled);
+		Word* getLatest() const;
 
 		cell* getStackBottom() const;
 		cell* getStackPointer() const;
+
 		cell* getMemory() const;
 		cell* getFreeMemory() const;
-		Word* getLatest() const;
 
-		void addBaseWords();
+		cell *getReturnStackPointer() const;
+		cell *getReturnStackBottom() const;
 
-		void setInput(FILE*); // TODO
+		Word** getInstructionPointer() const;
+		void setInstructionPointer(Word**);
+		void rewindInstructionPointer(size_t);
 
 		void pushReturn(cell);
 		cell popReturn();
 
-		int addCompiledWord(const char*, const char**);
+		void setInput(FILE*); // TODO
+		FILE* getInput();
 
-		void addMachineWords();
+		void setCompiling(bool _compiling);
 };
 
 void printCell(cell c);

@@ -25,7 +25,7 @@ void lt(Forth &forth);
 void _eq(Forth &forth);
 void within(Forth &forth);
 
-/*void forth_exit(Forth &forth);
+void forth_exit(Forth &forth);
 void literal(Forth &forth);
 void compile_start(Forth &forth);
 void compile_end(Forth &forth);
@@ -48,4 +48,4 @@ void _word_code(Forth &forth);
 void comma(Forth &forth);
 
 void next(Forth &forth);
-void interpreter_stub(Forth &forth);*/
+void interpreter_stub(Forth &forth);

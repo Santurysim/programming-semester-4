@@ -76,7 +76,7 @@ void rot(Forth &forth) {
 }
 
 void show(Forth &forth) {
-    const cell *c = forth.stackBottom;
+    const cell *c = forth.getStackBottom();
     while (c <= forth.top()) {
         printCell(*c);
         c += 1;
@@ -85,7 +85,7 @@ void show(Forth &forth) {
 }
 
 void over(Forth &forth) {
-    if(forth.top() - 1 < forth.stackBottom)
+    if(forth.top() - 1 < forth.getStackBottom())
         throw ForthIllegalStateException();
     forth.push(*(forth.top()-1));
 }
@@ -144,4 +144,123 @@ void within(Forth &forth) {
     l = forth.pop();
     a = forth.pop();
     forth.push(l <= a && a < r ? -1 : 0);
+}
+
+void forth_exit(Forth &forth){
+	forth.setInstructionPointer((Word**)forth.popReturn());
+}
+
+void literal(Forth &forth){
+	cell value = *(cell*)forth.getInstructionPointer();
+	forth.rewindInstructionPointer(1);
+	forth.push(value);
+}
+
+void compile_start(Forth &forth){
+	char buffer[MAX_WORD+1];
+	Word *word;
+	size_t length = 0;
+	readWord(forth.getInput(), buffer, MAX_WORD, &length);
+	if(length == 0)
+		throw ForthIllegalStateException();
+	word = forth.addWord(buffer, (uint8_t)length, true);
+	forth.setCompiling(true);
+	word->setHidden(true);
+}
+
+void compile_end(Forth &forth){
+	const Word *exit = forth.getLatest()->find("exit", strlen("exit"));
+	if(!exit)
+		throw ForthIllegalStateException();
+	forth.emit((cell)exit);
+	forth.setCompiling(false);
+	forth.getLatest()->setHidden(false);
+}
+
+void rpush(Forth &forth){
+	forth.pushReturn(forth.pop());
+}
+
+void rpop(Forth &forth){
+	forth.push(forth.popReturn());
+}
+
+void rtop(Forth &forth){
+	if(forth.getReturnStackPointer() <= forth.getReturnStackBottom() + 1)
+		throw ForthIllegalStateException();
+	forth.push(forth.getReturnStackBottom()[-2]);
+}
+
+void rshow(Forth &forth){
+	const cell *c = forth.getStackBottom();
+	while(c < forth.getStackPointer()){
+		printCell(*c);
+		c += 1;
+	}
+	printf("(r-top)\n");
+}
+
+void memory_read(Forth &forth){
+	forth.push(*(cell*)forth.pop());
+}
+
+void memory_write(Forth &forth){
+	cell *address = (cell*)forth.pop();
+	cell value = forth.pop();
+	*address = value;
+}
+
+void here(Forth &forth){
+	forth.push((cell)&forth.freeMemory);
+}
+
+void branch(Forth &forth){
+	forth.rewindInstructionPointer((size_t)forth.getInstructionPointer()[0] / sizeof(cell));
+}
+
+void branch0(Forth &forth){
+	cell offset = *(cell*)forth.getInstructionPointer();
+	cell value = forth.pop();
+	if(!value)
+		forth.rewindInstructionPointer(offset / sizeof(cell));
+	else
+		forth.rewindInstructionPointer(1);
+}
+
+void immediate(Forth &forth){
+	forth.getLatest()->setImmediate(!forth.getLatest()->isImmediate());
+}
+
+void next_word(Forth &forth){
+	size_t length;
+	static char buffer[MAX_WORD + 1];
+	readWord(forth.getInput(), buffer, MAX_WORD + 1, &length);
+	forth.push((cell)buffer);
+	forth.push((cell)length);
+}
+
+void find(Forth &forth){
+	uint8_t length = (uint8_t)forth.pop();
+	const char *name = (const char*)forth.pop();
+	const Word *word = forth.getLatest()->find(name, length);
+	forth.push((cell)word);
+}
+
+void _word_code(Forth &forth){
+	const Word *word = (const Word*)forth.pop();
+	const void *code = word->getCode();
+	forth.push((cell)code);
+}
+
+void comma(Forth &forth){
+	forth.emit(forth.pop());
+}
+
+void next(Forth &forth){
+	forth.rewindInstructionPointer(1);
+}
+
+void interpreter_stub(Forth&){
+	printf("ERROR: return stack underflow (must return to interpreter)\n");
+	exit(2);
 }
