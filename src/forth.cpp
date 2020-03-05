@@ -44,6 +44,11 @@ Forth::~Forth(){
 }
 
 void Forth::addMachineWords(){
+	int status = 0;
+	static const char *square[] = { "dup", "*", "exit" };
+	this->addCodeword("interpret", interpreter_stub);
+	this->stopWord = this->latest;
+	this->executing = &this->stopWord;
 	this->addCodeword("drop", drop);
     this->addCodeword("dup", _dup);
     this->addCodeword("+", add);
@@ -65,6 +70,35 @@ void Forth::addMachineWords(){
     this->addCodeword("=", _eq);
     this->addCodeword("<", lt);
     this->addCodeword("within", within);
+
+	this->addCodeword("exit", forth_exit);
+	this->addCodeword("lit", literal);
+	this->addCodeword(":", compile_start);
+	this->addCodeword(";", compile_end);
+	this->latest->setImmediate(true);
+	this->addCodeword("'", literal);
+
+	this->addCodeword(">r", rpush);
+	this->addCodeword("r>", rpop);
+	this->addCodeword("i", rtop);
+	this->addCodeword("rshow", rtop);
+	this->addCodeword("@", memory_read);
+	this->addCodeword("!", memory_write);
+	this->addCodeword("here", here);
+	this->addCodeword("branch", branch);
+	this->addCodeword("0branch", branch0);
+	this->addCodeword("immediate", immediate);
+	this->latest->setImmediate(true);
+
+	this->addCodeword("word", next_word);
+	this->addCodeword(">cfa", _word_code);
+	this->addCodeword("find", find);
+	this->addCodeword(",", comma);
+	this->addCodeword("next", next);
+	
+	status = this->addCompiledWord("square", square);
+	if(status)
+		throw ForthIllegalStateException();
 }
 
 // Data stack management
@@ -183,14 +217,9 @@ void Forth::runWord(const Word* word){
     } while(word != this->stopWord);
 }
 
-// TODO: just mark some word handlers friends
-
 cell* Forth::getStackBottom() const{
     return this->stackBottom;
 }
-
-// For test purposes
-// TODO: remove on macro
 
 cell* Forth::getStackPointer() const{
     return this->stackPointer;
@@ -206,6 +235,34 @@ cell* Forth::getFreeMemory() const{
 
 Word* Forth::getLatest() const{
     return this->latest;
+}
+
+cell* Forth::getReturnStackPointer() const{
+	return this->returnStackPointer;
+}
+
+cell* Forth::getReturnStackBottom() const{
+	return this->returnStackBottom;
+}
+
+Word** Forth::getInstructionPointer() const{
+	return this->executing;
+}
+
+void Forth::setInstructionPointer(Word** newInstructionPointer){
+	this->executing = newInstructionPointer;
+}
+
+void Forth::rewindInstructionPointer(size_t offset){
+	this->executing += offset;
+}
+
+FILE* Forth::getInput(){
+	return this->input;
+}
+
+void Forth::setCompiling(bool _compiling){
+	this->compiling = _compiling;
 }
 
 // Return stack management
@@ -274,6 +331,26 @@ const Word* Word::find(const char *name, uint8_t length) const {
 		word = (const Word*)word->next;
 	}
 	return NULL;
+}
+
+bool Word::isImmediate() const{
+	return this->immediate;
+}
+
+bool Word::isCompiled() const{
+	return this->compiled;
+}
+
+void Word::setCompiled(bool _compiled){
+	this->compiled = _compiled;
+}
+
+void Word::setImmediate(bool _immediate){
+	this->immediate = _immediate;
+}
+
+void Word::setHidden(bool _hidden){
+	this->hidden = _hidden;
 }
 
 // End of Word implementation

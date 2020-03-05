@@ -3,7 +3,7 @@
 #include "minunit.h"
 
 MU_TEST(forth_tests_init_free) {
-    Forth forth(stdin, 100, 100);
+    Forth forth(stdin, 100, 100, 100);
     
     mu_check(forth.getMemory() == forth.getFreeMemory());
     mu_check(forth.getMemory() != NULL);
@@ -18,7 +18,7 @@ MU_TEST(forth_tests_align) {
 }
 
 MU_TEST(forth_tests_push_pop) {
-    Forth forth(stdin, 100, 100);
+    Forth forth(stdin, 100, 100, 100);
     forth.push(123);
 
     mu_check(forth.getStackPointer() > forth.getStackBottom());
@@ -27,7 +27,7 @@ MU_TEST(forth_tests_push_pop) {
 }
 
 MU_TEST(forth_tests_emit) {
-    Forth forth(stdin, 100, 100);
+    Forth forth(stdin, 100, 100, 100);
     forth.emit(123);
 
     mu_check(forth.getFreeMemory() > forth.getMemory());
@@ -35,15 +35,15 @@ MU_TEST(forth_tests_emit) {
 }
 
 MU_TEST(forth_tests_codeword) {
-    Forth forth(stdin, 100, 100);
+    Forth forth(stdin, 100, 100, 100);
 
     mu_check(forth.getLatest() == NULL);
 
-    Word *w1 = forth.addWord("TEST1", strlen("TEST1"));
+    Word *w1 = forth.addWord("TEST1", strlen("TEST1"), false);
     forth.emit(123);
     mu_check(forth.getLatest() == w1);
 
-    Word *w2 = forth.addWord("TEST2", strlen("TEST2"));
+    Word *w2 = forth.addWord("TEST2", strlen("TEST2"), false);
     mu_check((*(cell*)w1->getCode()) == 123);
     mu_check((void*)w2 > w1->getCode());
     mu_check(forth.getLatest() == w2);
