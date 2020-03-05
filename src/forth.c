@@ -17,7 +17,9 @@ int forth_init(struct forth *forth, FILE *input,
     forth->memory = malloc(forth->memory_size * sizeof(cell));
     forth->memory_free = forth->memory;
 
-// Forth class
+    forth->data_size = stack;
+    forth->sp0 = malloc(forth->data_size * sizeof(cell));
+    forth->sp = forth->sp0;
 
     forth->return_size = ret;
     forth->rp0 = malloc(forth->return_size * sizeof(cell));
@@ -28,30 +30,29 @@ int forth_init(struct forth *forth, FILE *input,
     forth->is_compiling = false;
     forth->input = input;
 
-	this->sp0 = new cell[_memorySize];
-	this->stackPointer = this->sp0;
-	this->latest = NULL;
-	
-	if(!(this->memory) || !(this->sp0))
-		throw ForthException();
+    return forth->memory == NULL || forth->sp0 == NULL;
 }
 
-Forth::~Forth(){
-	delete [] this->sp0;
-	delete [] this->memory;
+void forth_free(struct forth *forth)
+{
+    free(forth->sp0);
+    free(forth->memory);
+    free(forth->rp0);
+    *forth = (struct forth) {0};
 }
 
-void Forth::push(cell value){
-	// code and data should not intersect?
-	assert(this->stackPointer < this->sp0 + this->dataSize);
-	*(this->stackPointer) = value;
-	this->stackPointer += 1;
+void forth_push(struct forth *forth, cell value)
+{
+    assert(forth->sp < forth->sp0 + forth->data_size);
+    *(forth->sp) = value;
+    forth->sp += 1;
 }
 
-cell Forth::pop(){
-	assert(this->stackPointer > this->sp0);
-	this->stackPointer -= 1;
-	return this->stackPointer;
+cell forth_pop(struct forth *forth)
+{
+    assert(forth->sp > forth->sp0);
+    forth->sp -= 1;
+    return *forth->sp;
 }
 
 void forth_push_return(struct forth *forth, cell value)
@@ -75,13 +76,8 @@ void forth_emit(struct forth *forth, cell value)
     forth->memory_free += 1;
 }
 
-void Forth::emit(cell value){
-	*(this->freeMemory) = value;
-	this->freeMemory += 1;
-}
-
-Word* Forth::addWord(const char *name, uint8_t length){
-	// TODO
+cell* forth_top(struct forth *forth) {
+    return forth->sp-1;
 }
 
 struct word* word_add(struct forth *forth,
@@ -99,22 +95,10 @@ struct word* word_add(struct forth *forth,
     return word;
 }
 
-ForthResult Forth::run(){
-	size_t length;
-	ForthResult readResult;
-	char wordBuffer[MAX_WORD + 1] = {0};
-	while((readResult = readWord(this->input, wordBuffer, 
-					sizeof(wordBuffer), &length)) == FORTH_OK){
-		const Word *word = this->latest.find(wordBuffer, length);
-		if(!word)
-			this->runNumber(wordBuffer, length);
-		else{
-            // ISO C forbids conversion of object pointer to function pointer type
-            const function code = ((struct { function fn; }*)word->getCode())->fn; // TODO
-		}
-	}
-	return readResult;
-
+const void* word_code(const struct word *word)
+{
+    uintptr_t size = align(sizeof(struct word) + 1 + word->length, sizeof(cell));
+    return (const void*)((uint8_t*)word + size);
 }
 
 const struct word* word_find(const struct word* word,
@@ -131,10 +115,9 @@ const struct word* word_find(const struct word* word,
     return NULL;
 }
 
-void Forth::addCodeword(const char *name. const function handler){
-	this->addWord(name, strlen(name));
-	assert(strlen(name) < 32);
-	this->emit(forth(cell)handler);
+static uintptr_t align(uintptr_t value, uint8_t alignment)
+{
+    return ((value - 1) | (alignment - 1)) + 1;
 }
 
 void forth_add_codeword(struct forth *forth,
@@ -146,9 +129,6 @@ void forth_add_codeword(struct forth *forth,
     forth_emit(forth, (cell)handler);
 }
 
-// End of Word implementation
-
-// Miscellaneous functions
 
 int forth_add_compileword(struct forth *forth,
     const char *name, const char** words)
@@ -171,11 +151,12 @@ void cell_print(cell cell) {
     printf("%"PRIdPTR" ", cell);
 }
 
-ForthResult readWord(FILE* source,
-    char* buffer, size_t bufferSize, size_t* length){
+enum forth_result read_word(FILE* source,
+    size_t buffer_size, char buffer[buffer_size], size_t *length)
+{
     size_t l = 0;
     int c; 
-    while ((c = fgetc(source)) != EOF && l < bufferSize) {
+    while ((c = fgetc(source)) != EOF && l < buffer_size) {
         // isspace(c) → l == 0
         if (isspace(c)) {
             if (l == 0) {
@@ -188,13 +169,13 @@ ForthResult readWord(FILE* source,
         l += 1;
     }
 
-    if (l > 0 && l < bufferSize) {
+    if (l > 0 && l < buffer_size) {
         *length = l;
         buffer[l] = 0;
         return FORTH_OK;
     }
 
-    if (l >= bufferSize) {
+    if (l >= buffer_size) {
         return FORTH_BUFFER_OVERFLOW;
     }
     
@@ -204,18 +185,6 @@ ForthResult readWord(FILE* source,
 static void forth_run_word(struct forth *forth, const struct word *word);
 static void forth_run_number(struct forth *forth,
     size_t length, const char word_buffer[length]);
-
-static void forth_run_number(struct forth *forth,
-    size_t length, const char word_buffer[length])
-{
-    char* end;
-    intptr_t number = strtoiptr(word_buffer, &end, 10); // FIXME: BASE can be internal variable
-    if (end - word_buffer < (int)length) {
-        fprintf(stderr, "Unknown word: '%.*s'\n", (int)length, word_buffer);
-    } else {
-        forth_push(forth, number);
-    }
-}
 
 enum forth_result forth_run(struct forth* forth)
 {
@@ -242,8 +211,8 @@ enum forth_result forth_run(struct forth* forth)
     return read_result;
 }
 
-void forth_add_codeword(struct forth *forth,
-    const char* name, const function handler)
+static void forth_run_number(struct forth *forth,
+    size_t length, const char word_buffer[length])
 {
     char* end;
     intptr_t number = strtoiptr(word_buffer, &end, 10); // FIXME: BASE can be internal variable
@@ -287,6 +256,4 @@ static intptr_t strtoiptr(const char* ptr, char** endptr, int base) {
     } else {
         return (intptr_t)strtoll(ptr, endptr, base);
     }
-    return NULL;
 }
-*/

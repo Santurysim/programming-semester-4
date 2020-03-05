@@ -2,20 +2,20 @@
 
 #include "forth.h"
 
-// void words_add(struct forth *forth);
+void words_add(struct forth *forth);
 
-// void drop(struct forth *forth);
-// void _dup(struct forth *forth);
-// void add(struct forth *forth);
-// void sub(struct forth *forth);
-// void mul(struct forth *forth);
-// void _div(struct forth *forth);
-// void mod(struct forth *forth);
-// void swap(struct forth *forth);
-// void rot(struct forth *forth);
-// void rot_back(struct forth *forth);
-// void show(struct forth *forth);
-// void over(struct forth *forth);
+void drop(struct forth *forth);
+void _dup(struct forth *forth);
+void add(struct forth *forth);
+void sub(struct forth *forth);
+void mul(struct forth *forth);
+void _div(struct forth *forth);
+void mod(struct forth *forth);
+void swap(struct forth *forth);
+void rot(struct forth *forth);
+void rot_back(struct forth *forth);
+void show(struct forth *forth);
+void over(struct forth *forth);
 
 void _true(struct forth *forth);
 void _false(struct forth *forth);
