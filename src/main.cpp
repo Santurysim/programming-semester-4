@@ -10,6 +10,11 @@
 int main(void){
     Forth forth(stdin, MAX_DATA, MAX_STACK, MAX_RETURN);
     forth.addMachineWords();
-	forth.run();
+	try{
+		forth.run();
+	} catch (ForthException e) {
+		printf("Error: %s", e.getCause());
+		return 1;
+	}
     return 0;
 }

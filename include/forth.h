@@ -18,17 +18,49 @@ enum ForthResult {
     FORTH_BUFFER_OVERFLOW
 };
 
-class ForthException{}; // TODO
+class ForthException{
+	protected:
+		const char *cause;
+	public:
+		ForthException(): cause("") {}
+		ForthException(const char *_cause): cause(_cause) {}
+		const char *getCause() const { return cause; }
+};
 
-class WordPropertyException: ForthException {};
+class WordPropertyException: public ForthException {
+	public:
+		WordPropertyException(): ForthException("") {}
+		WordPropertyException(const char *_cause): ForthException(_cause) {}
+		const char *getCause() const { return cause; }
+};
 
-class ForthIllegalArgumentException: ForthException {};
+class ForthIllegalArgumentException: public ForthException {
+	public:
+		ForthIllegalArgumentException(): ForthException("") {}
+		ForthIllegalArgumentException(const char *_cause): ForthException(_cause) {}
+		const char *getCause() const { return cause; }
+};
 
-class ForthOutOfMemoryException: ForthException {};
+class ForthOutOfMemoryException: public ForthException {
+	public:
+		ForthOutOfMemoryException(): ForthException("") {}
+		ForthOutOfMemoryException(const char *_cause): ForthException(_cause) {}
+		const char *getCause() const { return cause; }
+};
 
-class ForthIllegalStateException: ForthException {};
+class ForthIllegalStateException: public ForthException {
+	public:
+		ForthIllegalStateException(): ForthException("") {}
+		ForthIllegalStateException(const char *_cause): ForthException(_cause) {}
+		const char *getCause() const { return cause; }
+};
 
-class ForthEmptyStackException: ForthException {};
+class ForthEmptyStackException: public ForthException {
+	public:
+		ForthEmptyStackException(): ForthException("") {}
+		ForthEmptyStackException(const char *_cause): ForthException(_cause) {}
+		const char *getCause() const { return cause; }
+};
 
 class Word{
 	private:
@@ -86,7 +118,6 @@ class Forth{
 		size_t returnStackSize;
 
 		void runNumber(const char *wordBuffer, size_t length);
-		void runWord(const Word*);
 	public:
 		Forth(FILE *_input, size_t _memorySize, size_t _stackSize, size_t _returnStackSize);
 		~Forth();
@@ -126,6 +157,7 @@ class Forth{
 		FILE* getInput();
 
 		void setCompiling(bool _compiling);
+		void runWord(const Word*);
 };
 
 void printCell(cell c);

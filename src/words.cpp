@@ -86,7 +86,7 @@ void show(Forth &forth) {
 
 void over(Forth &forth) {
     if(forth.top() - 1 < forth.getStackBottom())
-        throw ForthIllegalStateException();
+        throw ForthIllegalStateException("over: not enough values in data stack");
     forth.push(*(forth.top()-1));
 }
 
@@ -162,7 +162,7 @@ void compile_start(Forth &forth){
 	size_t length = 0;
 	readWord(forth.getInput(), buffer, MAX_WORD, &length);
 	if(length == 0)
-		throw ForthIllegalStateException();
+		throw ForthIllegalStateException("compile_start: failed to read word");
 	word = forth.addWord(buffer, (uint8_t)length, true);
 	forth.setCompiling(true);
 	word->setHidden(true);
@@ -171,7 +171,7 @@ void compile_start(Forth &forth){
 void compile_end(Forth &forth){
 	const Word *exit = forth.getLatest()->find("exit", strlen("exit"));
 	if(!exit)
-		throw ForthIllegalStateException();
+		throw ForthIllegalStateException("compile_end: exit word not found");
 	forth.emit((cell)exit);
 	forth.setCompiling(false);
 	forth.getLatest()->setHidden(false);
@@ -187,13 +187,13 @@ void rpop(Forth &forth){
 
 void rtop(Forth &forth){
 	if(forth.getReturnStackPointer() <= forth.getReturnStackBottom() + 1)
-		throw ForthIllegalStateException();
-	forth.push(forth.getReturnStackBottom()[-2]);
+		throw ForthIllegalStateException("rtop: not enough values in return stack");
+	forth.push(forth.getReturnStackPointer()[-2]);
 }
 
 void rshow(Forth &forth){
-	const cell *c = forth.getStackBottom();
-	while(c < forth.getStackPointer()){
+	const cell *c = forth.getReturnStackBottom();
+	while(c < forth.getReturnStackPointer()){
 		printCell(*c);
 		c += 1;
 	}
@@ -207,7 +207,7 @@ void memory_read(Forth &forth){
 void memory_write(Forth &forth){
 	cell *address = (cell*)forth.pop();
 	cell value = forth.pop();
-	*address = value;
+	*(cell*)address = value;
 }
 
 void here(Forth &forth){

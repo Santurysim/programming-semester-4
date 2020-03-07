@@ -34,7 +34,7 @@ Forth::Forth(FILE *_input, size_t _memorySize, size_t _stackSize, size_t _return
 	this->compiling = false;
 	
 	if(!(this->memory) || !(this->stackBottom))
-		throw ForthException();
+		throw ForthException("Forth constructor: failed to allocate memory");
 }
 
 Forth::~Forth(){
@@ -45,31 +45,31 @@ Forth::~Forth(){
 
 void Forth::addMachineWords(){
 	int status = 0;
-	static const char *square[] = { "dup", "*", "exit" };
+	static const char *square[] = { "dup", "*", "exit", NULL};
 	this->addCodeword("interpret", interpreter_stub);
 	this->stopWord = this->latest;
 	this->executing = &this->stopWord;
 	this->addCodeword("drop", drop);
-    this->addCodeword("dup", _dup);
-    this->addCodeword("+", add);
-    this->addCodeword("-", sub);
-    this->addCodeword("*", mul);
-    this->addCodeword("/", _div);
-    this->addCodeword("%", mod);
-    this->addCodeword("swap", swap);
-    this->addCodeword("rot", rot);
-    this->addCodeword("-rot", rot_back);
-    this->addCodeword("show", show);
-    this->addCodeword("over", over);
-    this->addCodeword("true", _true);
-    this->addCodeword("false", _false);
-    this->addCodeword("xor", _xor);
-    this->addCodeword("or", _or);
-    this->addCodeword("and", _and);
-    this->addCodeword("not", _not);
-    this->addCodeword("=", _eq);
-    this->addCodeword("<", lt);
-    this->addCodeword("within", within);
+	this->addCodeword("dup", _dup);
+	this->addCodeword("+", add);
+	this->addCodeword("-", sub);
+	this->addCodeword("*", mul);
+	this->addCodeword("/", _div);
+	this->addCodeword("%", mod);
+	this->addCodeword("swap", swap);
+	this->addCodeword("rot", rot);
+	this->addCodeword("-rot", rot_back);
+	this->addCodeword("show", show);
+	this->addCodeword("over", over);
+	this->addCodeword("true", _true);
+	this->addCodeword("false", _false);
+	this->addCodeword("xor", _xor);
+	this->addCodeword("or", _or);
+	this->addCodeword("and", _and);
+	this->addCodeword("not", _not);
+	this->addCodeword("=", _eq);
+	this->addCodeword("<", lt);
+	this->addCodeword("within", within);
 
 	this->addCodeword("exit", forth_exit);
 	this->addCodeword("lit", literal);
@@ -98,7 +98,7 @@ void Forth::addMachineWords(){
 	
 	status = this->addCompiledWord("square", square);
 	if(status)
-		throw ForthIllegalStateException();
+		throw ForthIllegalStateException("addMachineWords: failed to add square");
 }
 
 // Data stack management
@@ -106,14 +106,14 @@ void Forth::addMachineWords(){
 void Forth::push(cell value){
 	// Ensure we have room for new data
 	if(this->stackPointer == this->stackBottom + this->dataSize)
-		throw ForthOutOfMemoryException();
+		throw ForthOutOfMemoryException("push: data stack full");
 	*(this->stackPointer) = value;
 	this->stackPointer += 1;
 }
 
 cell Forth::pop(){
 	if (this->stackPointer == this->stackBottom){
-		throw ForthEmptyStackException();
+		throw ForthEmptyStackException("pop: data stack empty");
 	}
 	
 	this->stackPointer -= 1;
@@ -128,10 +128,10 @@ cell* Forth::top(){
 
 void Forth::addCodeword(const char *name, const function handler){
 	if(strlen(name) >= 32)
-		throw ForthIllegalArgumentException();
+		throw ForthIllegalArgumentException("addCodeword: too long name");
 	if((uint8_t*)this->freeMemory + align(sizeof(Word) + 1 + strlen(name), sizeof(cell)) >
 		(uint8_t*)(this->memory + this->memorySize)){
-		throw ForthOutOfMemoryException();
+		throw ForthOutOfMemoryException("addCodeword: dictionary is full");
 	}
 	this->addWord(name, strlen(name), false);
 	this->emit((cell)handler);
@@ -160,7 +160,7 @@ int Forth::addCompiledWord(const char *name, const char **words){
 			return 1;
 		}
 		this->emit((cell)word);
-		word += 1;
+		words += 1;
 	}
 	return 0;
 }
@@ -195,7 +195,7 @@ void Forth::runNumber(const char *wordBuffer, size_t length){
     else{
         const Word *word = this->latest->find("lit", strlen("lit"));
         if(!word)
-            throw ForthIllegalStateException();
+            throw ForthIllegalStateException("runNumber: literal word missing");
         this->emit((cell)word);
         this->emit(number);
     }
@@ -214,6 +214,7 @@ void Forth::runWord(const Word* word){
             this->pushReturn((cell)this->executing);
             this->executing = (Word**)word->getCode();
         }
+		word = *this->executing;
     } while(word != this->stopWord);
 }
 
@@ -269,14 +270,14 @@ void Forth::setCompiling(bool _compiling){
 
 void Forth::pushReturn(cell value){
 	if(this->returnStackPointer == this->returnStackBottom + this->returnStackSize)
-		throw ForthOutOfMemoryException();
+		throw ForthOutOfMemoryException("pushReturn: return stack full");
 	*(this->returnStackPointer) = value;
 	this->returnStackPointer++;
 }
 
 cell Forth::popReturn(){
 	if(this->returnStackPointer == this->returnStackBottom)
-		throw ForthEmptyStackException();
+		throw ForthEmptyStackException("popReturn: return stack empty");
 	this->returnStackPointer--;
 	return *(this->returnStackPointer);
 }
@@ -311,7 +312,7 @@ const char* Word::getName() const {
 
 void Word::setName(const char *newName, uint8_t newLength){
 	if(this->length != 0)
-		throw WordPropertyException();
+		throw WordPropertyException("setName: attempt to overwrite name");
 	char *name = (char*)((uint8_t*)this + sizeof(Word));
 	memcpy(name, newName, newLength + 1);
 	this->length = newLength;
