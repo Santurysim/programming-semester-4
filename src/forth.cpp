@@ -262,6 +262,10 @@ FILE* Forth::getInput(){
 	return this->input;
 }
 
+void Forth::setInput(FILE *newInput){
+	this->input = newInput;
+}
+
 void Forth::setCompiling(bool _compiling){
 	this->compiling = _compiling;
 }
