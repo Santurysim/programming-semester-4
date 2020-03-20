@@ -35,7 +35,7 @@ build/cforth: $(CFORTH_MODULES:%=build/%.o)
 CFLAGS_COMMON = -MMD  -I./include \
 	-std=c++98 -pedantic -Wall -Werror -Wextra -pedantic-errors \
 	-Wpointer-arith -Waggregate-return \
-	-Wmissing-declarations \
+	-Wmissing-declarations -Wcast-qual \
 	-Wlong-long -Winline -Wredundant-decls \
 	-Wcast-align -Wfloat-equal -D__STRICT_ANSI__
 # Про предупреждения можно почитать в руководстве GCC:

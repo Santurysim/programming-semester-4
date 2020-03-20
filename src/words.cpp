@@ -151,7 +151,7 @@ void forth_exit(Forth &forth){
 }
 
 void literal(Forth &forth){
-	cell value = *(cell*)forth.getInstructionPointer();
+	cell value = *(const cell*)forth.getInstructionPointer();
 	forth.rewindInstructionPointer(1);
 	forth.push(value);
 }
@@ -219,7 +219,7 @@ void branch(Forth &forth){
 }
 
 void branch0(Forth &forth){
-	cell offset = *(cell*)forth.getInstructionPointer();
+	cell offset = *(const cell*)forth.getInstructionPointer();
 	cell value = forth.pop();
 	if(!value)
 		forth.rewindInstructionPointer(offset / sizeof(cell));
@@ -248,7 +248,7 @@ void find(Forth &forth){
 
 void _word_code(Forth &forth){
 	const Word *word = (const Word*)forth.pop();
-	const void *code = word->getCode();
+	const void *code = word->getConstCode();
 	forth.push((cell)code);
 }
 

@@ -31,35 +31,30 @@ class WordPropertyException: public ForthException {
 	public:
 		WordPropertyException(): ForthException("") {}
 		WordPropertyException(const char *_cause): ForthException(_cause) {}
-		const char *getCause() const { return cause; }
 };
 
 class ForthIllegalArgumentException: public ForthException {
 	public:
 		ForthIllegalArgumentException(): ForthException("") {}
 		ForthIllegalArgumentException(const char *_cause): ForthException(_cause) {}
-		const char *getCause() const { return cause; }
 };
 
 class ForthOutOfMemoryException: public ForthException {
 	public:
 		ForthOutOfMemoryException(): ForthException("") {}
 		ForthOutOfMemoryException(const char *_cause): ForthException(_cause) {}
-		const char *getCause() const { return cause; }
 };
 
 class ForthIllegalStateException: public ForthException {
 	public:
 		ForthIllegalStateException(): ForthException("") {}
 		ForthIllegalStateException(const char *_cause): ForthException(_cause) {}
-		const char *getCause() const { return cause; }
 };
 
 class ForthEmptyStackException: public ForthException {
 	public:
 		ForthEmptyStackException(): ForthException("") {}
 		ForthEmptyStackException(const char *_cause): ForthException(_cause) {}
-		const char *getCause() const { return cause; }
 };
 
 class Word{
@@ -90,14 +85,15 @@ class Word{
 		void setImmediate(bool _immediate);
 		bool isImmediate() const;
 
-		const void* getCode() const;
+		void* getCode();
+		const void* getConstCode() const;
 		const Word* find(const char *name, uint8_t length) const;
 };
 
 class Forth{
 	private:
 		friend void here(Forth& forth);
-	    Word **executing;
+	    Word *const* executing;
     	cell *returnStackPointer;
 		cell *stackPointer;
 		cell *memory;
@@ -146,7 +142,7 @@ class Forth{
 		cell *getReturnStackPointer() const;
 		cell *getReturnStackBottom() const;
 
-		Word** getInstructionPointer() const;
+		Word*const* getInstructionPointer() const;
 		void setInstructionPointer(Word**);
 		void rewindInstructionPointer(size_t);
 

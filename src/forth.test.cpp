@@ -63,12 +63,12 @@ MU_TEST(forth_tests_compileword){
 	const Word *square = forth.getLatest()->find("square", strlen("square"));
 
 	mu_check(square);
-	const Word **words = (const Word**)square->getCode();
+	const Word *const*words = (const Word*const*)square->getConstCode();
 	mu_check(words[0] == dup);
 	mu_check(words[1] == mul);
 	mu_check(words[2] == exit);
 	Word *w1 = forth.addWord("TEST1", strlen("TEST1"), false);
-	mu_check((void*)w1 > (void*)(words + 2));
+	mu_check((const void*)w1 > (const void*)(words + 2));
 }
 
 MU_TEST(forth_tests_literal){

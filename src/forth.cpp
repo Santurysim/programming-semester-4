@@ -48,7 +48,7 @@ void Forth::addMachineWords(){
 	static const char *square[] = { "dup", "*", "exit", NULL};
 	this->addCodeword("interpret", interpreter_stub);
 	this->stopWord = this->latest;
-	this->executing = &this->stopWord;
+	this->executing = (Word *const*)&this->stopWord;
 	this->addCodeword("drop", drop);
 	this->addCodeword("dup", _dup);
 	this->addCodeword("+", add);
@@ -208,11 +208,11 @@ void Forth::runWord(const Word* word){
         if(!word->isCompiled()){
             // ISO C forbids conversion of object pointer to function pointer type
             // But C++ does not
-            const function code = *(function*)word->getCode();
+            const function code = *(const function*)word->getConstCode();
 			code(*this);
         } else{
             this->pushReturn((cell)this->executing);
-            this->executing = (Word**)word->getCode();
+            this->executing = (Word *const*)word->getConstCode();
         }
 		word = *this->executing;
     } while(word != this->stopWord);
@@ -246,7 +246,7 @@ cell* Forth::getReturnStackBottom() const{
 	return this->returnStackBottom;
 }
 
-Word** Forth::getInstructionPointer() const{
+Word*const* Forth::getInstructionPointer() const{
 	return this->executing;
 }
 
@@ -307,7 +307,7 @@ uint8_t Word::getNameLength() const{
 }
 
 const char* Word::getName() const {
-	return (const char *)((uint8_t*)this + sizeof(Word));
+	return (const char *)((const uint8_t*)this + sizeof(Word));
 }
 
 void Word::setName(const char *newName, uint8_t newLength){
@@ -318,9 +318,14 @@ void Word::setName(const char *newName, uint8_t newLength){
 	this->length = newLength;
 }
 
-const void* Word::getCode() const {
+void* Word::getCode() {
 	uintptr_t size = align(sizeof(Word) + 1 + this->length, sizeof(cell));
-	return (const void*)((uint8_t*)this + size);
+	return (void*)((uint8_t*)this + size);
+}
+
+const void* Word::getConstCode() const {
+	uintptr_t size = align(sizeof(Word) + 1 + this->length, sizeof(cell));
+	return (const void*)((const uint8_t*)this + size);
 }
 
 const Word* Word::find(const char *name, uint8_t length) const {
