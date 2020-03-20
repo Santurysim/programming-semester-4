@@ -7,27 +7,27 @@
 #include <stdio.h>
 #include <string.h>
 
-static uintptr_t align(uintptr_t value, uint8_t alignment);
+static uint16_t align(uint16_t value, uint16_t alignment);
 static intptr_t strtoiptr(const char* ptr, char** endptr, int base);
 
 int forth_init(struct forth *forth, FILE *input,
-    size_t memory, size_t stack, size_t ret)
+    uint16_t memory, uint16_t stack, uint16_t ret)
 {
     forth->memory_size = memory;
     forth->memory = malloc(forth->memory_size * sizeof(cell));
-    forth->memory_free = forth->memory;
+    forth->memory_free = 0;
 
     forth->data_size = stack;
     forth->sp0 = malloc(forth->data_size * sizeof(cell));
-    forth->sp = forth->sp0;
+    forth->sp = 0;
 
     forth->return_size = ret;
     forth->rp0 = malloc(forth->return_size * sizeof(cell));
-    forth->rp = forth->rp0;
+    forth->rp = 0;
 
-    forth->latest = NULL;
-    forth->executing = NULL;
-    forth->is_compiling = false;
+    forth->latest = 0;
+    forth->executing = 0;
+    forth->is_compiling = 0;
     forth->input = input;
 
     return forth->memory == NULL || forth->sp0 == NULL;
@@ -43,79 +43,81 @@ void forth_free(struct forth *forth)
 
 void forth_push(struct forth *forth, cell value)
 {
-    assert(forth->sp < forth->sp0 + forth->data_size);
-    *(forth->sp) = value;
+    assert(forth->sp < forth->data_size);
+    forth->sp0[forth->sp] = value;
     forth->sp += 1;
 }
 
 cell forth_pop(struct forth *forth)
 {
-    assert(forth->sp > forth->sp0);
+    assert(forth->sp > 0);
     forth->sp -= 1;
-    return *forth->sp;
+    return *(forth->sp0 + forth->sp);
 }
 
 void forth_push_return(struct forth *forth, cell value)
 {
-    assert(forth->rp < forth->rp0 + forth->return_size);
-    forth->rp[0] = value;
+    assert(forth->rp < forth->return_size);
+    forth->rp0[forth->rp] = value;
     forth->rp += 1;
     //printf(">r %lx %ld\n", value, forth->rp - forth->rp0);
 }
 
 cell forth_pop_return(struct forth *forth) {
-    assert(forth->rp > forth->rp0);
+    assert(forth->rp > 0);
     forth->rp -= 1;
     //printf("r> %lx %ld\n", forth->rp[0], forth->rp - forth->rp0);
-    return forth->rp[0];
+    return forth->rp0[forth->rp];
 }
 
 void forth_emit(struct forth *forth, cell value)
 {
-    *(forth->memory_free) = value;
+    forth->memory[forth->memory_free] = value;
     forth->memory_free += 1;
 }
 
-cell* forth_top(struct forth *forth) {
+offset forth_top(struct forth *forth) {
     return forth->sp-1;
 }
 
 struct word* word_add(struct forth *forth,
     uint8_t length, const char name[length])
 {
-    struct word* word = (struct word*)forth->memory_free;
+    uint16_t word_offset = forth->memory_free;
+    struct word* word = (struct word*)(forth->memory[forth->memory_free]);
     word->next = forth->latest;
     word->length = length;
-    word->hidden = false;
-    word->immediate = false;
+    word->hidden = 0;
+    word->immediate = 0;
     memcpy(word->name, name, length);
-    forth->memory_free = (cell*)word_code(word);
-    assert((char*)forth->memory_free >= word->name + length);
-    forth->latest = word;
+    forth->memory_free = word_code(forth, word_offset);
+    assert((char*)(forth->memory[forth->memory_free]) >= word->name + length);
+    forth->latest = word_offset;
     return word;
 }
 
-const void* word_code(const struct word *word)
+offset word_code(struct forth *forth, offset word) // TODO
 {
-    uintptr_t size = align(sizeof(struct word) + 1 + word->length, sizeof(cell));
-    return (const void*)((uint8_t*)word + size);
+    uint16_t size = align(sizeof(struct word) + 1 + ((struct word*)(forth->memory + word))->length, sizeof(cell));
+    return (word + size);
 }
 
-const struct word* word_find(const struct word* word,
+offset word_find(struct forth *forth, offset word,
     uint8_t length, const char name[length])
 {
     while (word) {
-        if (!word->hidden
-            && length == word->length
-            && ! strncmp(word->name, name, length)) {
+        struct word *word_ptr = (struct word*)(forth->memory + word)
+        if (!word_ptr->hidden
+            && length == word_ptr->length
+            && ! strncmp(word-ptr->name, name, length)) {
             return word;
         }
-        word = word->next;
+        word = word_ptr->next;
     }
     return NULL;
 }
 
-static uintptr_t align(uintptr_t value, uint8_t alignment)
+static uintptr_t align(uintptr_t value, uint8_t alignment) // TODO
 {
     return ((value - 1) | (alignment - 1)) + 1;
 }
@@ -123,20 +125,20 @@ static uintptr_t align(uintptr_t value, uint8_t alignment)
 void forth_add_codeword(struct forth *forth,
     const char* name, const function handler)
 {
-    struct word *word = word_add(forth, strlen(name), name);
-    word->compiled = false;
+    offset word = word_add(forth, strlen(name), name);
+    WORD_PTR(forth, word)->compiled = 0;
     assert(strlen(name) <= 32);
-    forth_emit(forth, (cell)handler);
+    forth_emit(forth, (cell)handler); // TODO
 }
 
 
 int forth_add_compileword(struct forth *forth,
     const char *name, const char** words)
 {
-    struct word *word = word_add(forth, strlen(name), name);
-    word->compiled = true;
+    offset new_word = word_add(forth, strlen(name), name);
+    WORD_PTR(forth, new_word)->compiled = 1;
     while (*words) {
-        const struct word* word = word_find(forth->latest, strlen(*words), *words);
+        offset word = word_find(forth->latest, strlen(*words), *words);
         if (!word) {
             return 1;
         }
@@ -148,7 +150,7 @@ int forth_add_compileword(struct forth *forth,
 }
 
 void cell_print(cell cell) {
-    printf("%"PRIdPTR" ", cell);
+    printf("%"PRId8" ", cell);
 }
 
 enum forth_result read_word(FILE* source,
@@ -157,7 +159,7 @@ enum forth_result read_word(FILE* source,
     size_t l = 0;
     int c; 
     while ((c = fgetc(source)) != EOF && l < buffer_size) {
-        // isspace(c) → l == 0
+        // isspace(c) -> l == 0
         if (isspace(c)) {
             if (l == 0) {
                 continue;
@@ -182,7 +184,7 @@ enum forth_result read_word(FILE* source,
     return FORTH_EOF;
 }
 
-static void forth_run_word(struct forth *forth, const struct word *word);
+static void forth_run_word(struct forth *forth, offset word);
 static void forth_run_number(struct forth *forth,
     size_t length, const char word_buffer[length]);
 
@@ -199,10 +201,10 @@ enum forth_result forth_run(struct forth* forth)
             &length
         )) == FORTH_OK) {
 
-        const struct word* word = word_find(forth->latest, length, word_buffer);
-        if (word == NULL) {
+        offset word = word_find(forth, forth->latest, length, word_buffer);
+        if (word == 0) {
             forth_run_number(forth, length, word_buffer);
-        } else if (word->immediate || !forth->is_compiling) {
+        } else if (WORD_PTR(forth, word)->immediate || !forth->is_compiling) {
             forth_run_word(forth, word);
         } else {
             forth_emit(forth, (cell)word);
