@@ -12,7 +12,7 @@ void words_add(struct forth *forth)
 
     forth_add_codeword(forth, "interpret", interpreter_stub);
     forth->stopword = forth->latest;
-    forth->executing = &forth->stopword;
+    forth->executing = forth->stopword;
     forth_add_codeword(forth, "drop", drop);
     forth_add_codeword(forth, "dup", _dup);
     forth_add_codeword(forth, "+", add);
@@ -39,7 +39,7 @@ void words_add(struct forth *forth)
     forth_add_codeword(forth, "lit", literal);
     forth_add_codeword(forth, ":", compile_start);
     forth_add_codeword(forth, ";", compile_end);
-    forth->latest->immediate = true;
+    WORD_PTR(forth, forth->latest)->immediate = 1;
     forth_add_codeword(forth, "'", literal);
 
     forth_add_codeword(forth, ">r", rpush);
@@ -52,7 +52,7 @@ void words_add(struct forth *forth)
     forth_add_codeword(forth, "branch", branch);
     forth_add_codeword(forth, "0branch", branch0);
     forth_add_codeword(forth, "immediate", immediate);
-    forth->latest->immediate = true;
+    WORD_PTR(forth, forth->latest)->immediate = 1;
 
     forth_add_codeword(forth, "word", next_word);
     forth_add_codeword(forth, ">cfa", _word_code);
@@ -69,7 +69,7 @@ void drop(struct forth *forth) {
 }
 
 void _dup(struct forth *forth) {
-    forth_push(forth, *forth_top(forth));
+    forth_push(forth, forth->sp0[forth_top(forth)]);
 }
 
 void add(struct forth *forth) {
@@ -136,17 +136,17 @@ void rot(struct forth *forth) {
 }
 
 void show(struct forth *forth) {
-    const cell *c = forth->sp0;
+    offset c = 0;
     while (c <= forth_top(forth)) {
-        cell_print(*c);
+        cell_print(forth->sp0[c]);
         c += 1;
     }
     printf("(top)\n");
 }
 
 void over(struct forth *forth) {
-    assert(forth_top(forth) - 1 >= forth->sp0);
-    forth_push(forth, *(forth_top(forth)-1));
+    assert(forth_top(forth) - 1 >= 0);
+    forth_push(forth, *(forth->sp0 + forth_top(forth) - 1));
 }
 
 void _true(struct forth *forth) {
@@ -206,12 +206,12 @@ void within(struct forth *forth) {
 }
 
 void forth_exit(struct forth *forth) {
-    forth->executing = (struct word**)forth_pop_return(forth);
+    forth->executing = (offset)forth_pop_return(forth);
 }
 
 void literal(struct forth *forth)
 {
-    cell value = *(cell*)forth->executing;
+    cell value = (cell)forth->memory[forth->executing];
     forth->executing += 1;
     forth_push(forth, value);
 }
@@ -220,24 +220,24 @@ void compile_start(struct forth *forth)
 {
     char buffer[MAX_WORD+1];
     size_t length;
-    struct word* word;
+    offset word;
 
     read_word(forth->input, MAX_WORD, buffer, &length);
     assert(length > 0);
 
     word = word_add(forth, (uint8_t)length, buffer);
-    forth->is_compiling = true;
-    word->hidden = true;
-    word->compiled = true;
+    forth->is_compiling = 1;
+    WORD_PTR(forth, word)->hidden = 1;
+    WORD_PTR(forth, word)->compiled = 1;
 }
 
 void compile_end(struct forth *forth)
 {
-    const struct word *exit = word_find(forth->latest, strlen("exit"), "exit");
-    assert(exit);
-    forth_emit(forth, (cell)exit);
-    forth->is_compiling = false;
-    forth->latest->hidden = false;
+    offset exit_word = word_find(forth, forth->latest, strlen("exit"), "exit");
+    assert(exit_word);
+    forth_emit(forth, (cell)exit_word);
+    forth->is_compiling = 0;
+    WORD_PTR(forth, forth->latest)->hidden = 0;
 }
 
 void rpush(struct forth *forth) {
@@ -249,15 +249,15 @@ void rpop(struct forth *forth) {
     forth_push(forth, forth_pop_return(forth));
 }
 
-void rtop(struct forth  *forth) {
-    assert(forth->rp > forth->rp0+1);
-    forth_push(forth, forth->rp[-2]);
+void rtop(struct forth *forth) {
+    assert(forth->rp > 1);
+    forth_push(forth, forth->rp0[forth->rp-2]);
 }
 
 void rshow(struct forth *forth) {
-    const cell *c = forth->rp0;
+    offset c = 0;
     while (c < forth->rp) {
-        cell_print(*c);
+        cell_print((cell)forth->rp0[c]);
         c += 1;
     }
     printf("(r-top)\n");
@@ -266,32 +266,32 @@ void rshow(struct forth *forth) {
 
 void memory_read(struct forth *forth)
 {
-    forth_push(forth, *(cell*)(forth_pop(forth)));
+    forth_push(forth, *(cell*)(forth_iptr_pop(forth)));
 }
 
 void memory_write(struct forth *forth)
 {
-    cell* address = (cell*)forth_pop(forth);
+    cell* address = (cell*)forth_iptr_pop(forth);
     cell value = forth_pop(forth);
     *address = value;
 }
 
 void here(struct forth *forth)
 {
-    forth_push(forth, (cell)&forth->memory_free);
+    forth_iptr_push(forth, (intptr_t)&forth->memory_free);
 }
 
 void branch(struct forth *forth)
 {
-    forth->executing += ((size_t)forth->executing[0])/sizeof(cell);
+    forth->executing += ((size_t)forth->memory[forth->executing])/sizeof(cell);
 }
 
 void branch0(struct forth *forth)
 {
-    cell offset = *(cell*)(forth->executing);
+    cell offset_value = forth->memory[forth->executing];
     cell value = forth_pop(forth);
     if (!value) {
-        forth->executing += offset / sizeof(cell);
+        forth->executing += offset_value / sizeof(cell);
     } else {
         forth->executing += 1;
     }
@@ -299,7 +299,7 @@ void branch0(struct forth *forth)
 
 void immediate(struct forth *forth)
 {
-    forth->latest->immediate = !forth->latest->immediate;
+    WORD_PTR(forth, forth->latest)->immediate = !WORD_PTR(forth, forth->latest)->immediate;
 }
 
 void next_word(struct forth *forth)
@@ -307,23 +307,23 @@ void next_word(struct forth *forth)
     size_t length;
     static char buffer[MAX_WORD+1];
     read_word(forth->input, MAX_WORD+1, buffer, &length);
-    forth_push(forth, (cell)buffer);
+    forth_iptr_push(forth, (intptr_t)buffer);
     forth_push(forth, (cell)length);
 }
 
 void find(struct forth *forth)
 {
     uint8_t length = (uint8_t)forth_pop(forth);
-    const char *name = (const char*)forth_pop(forth);
-    const struct word *word = word_find(forth->latest, length, name);
-    forth_push(forth, (cell)word);
+    const char *name = (const char*)forth_iptr_pop(forth);
+    offset word = word_find(forth, forth->latest, length, name);
+    forth_iptr_push(forth, (intptr_t)WORD_PTR(forth, word));
 }
 
 void _word_code(struct forth *forth)
 {
-    const struct word* word = (const struct word*)forth_pop(forth);
-    const void *code = word_code(word);
-    forth_push(forth, (cell)code);
+    const struct word* word = (const struct word*)forth_iptr_pop(forth);
+    offset code = word_code(forth, (offset)((const cell*)word - forth->memory));
+    forth_iptr_push(forth, (intptr_t)(forth->memory + code));
 }
 
 void comma(struct forth *forth)

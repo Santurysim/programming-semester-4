@@ -1,5 +1,4 @@
 #pragma once
-#include <stduint8_t.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -8,7 +7,7 @@ struct forth;
 typedef uint16_t cell;
 typedef uint16_t offset;
 
-#define WORD_PTR(forth, word_offset) (struct word*)(forth->memory + word_offset)
+#define WORD_PTR(forth, word_offset) ((struct word*)((forth)->memory + (word_offset)))
 
 #define MAX_WORD 32
 
@@ -61,6 +60,10 @@ void forth_push(struct forth *forth, cell value);
 cell forth_pop(struct forth *forth);
 
 offset forth_top(struct forth *forth);
+
+void forth_iptr_push(struct forth *forth, intptr_t value);
+
+intptr_t forth_iptr_pop(struct forth *forth);
 
 void forth_push_return(struct forth *forth, cell value);
 

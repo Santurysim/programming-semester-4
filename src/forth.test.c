@@ -6,9 +6,9 @@ MU_TEST(forth_tests_init_free) {
     struct forth forth = {0};
     forth_init(&forth, stdin, 100, 100, 100);
     
-    mu_check(forth.memory == forth.memory_free);
+    mu_check(forth.memory_free == 0);
     mu_check(forth.memory != NULL);
-    mu_check(forth.sp0 == forth.sp);
+    mu_check(forth.sp == 0);
     mu_check(forth.sp0 != NULL);
 
     forth_free(&forth);
@@ -25,9 +25,9 @@ MU_TEST(forth_tests_push_pop) {
     forth_init(&forth, stdin, 100, 100, 100);
     forth_push(&forth, 123);
 
-    mu_check(forth.sp > forth.sp0);
+    mu_check(forth.sp > 0);
     mu_check(forth_pop(&forth) == 123);
-    mu_check(forth.sp0 == forth.sp);
+    mu_check(forth.sp == 0);
 }
 
 MU_TEST(forth_tests_emit) {
@@ -35,7 +35,7 @@ MU_TEST(forth_tests_emit) {
     forth_init(&forth, stdin, 100, 100, 100);
     forth_emit(&forth, 123);
 
-    mu_check(forth.memory_free > forth.memory);
+    mu_check(forth.memory_free > 0);
     mu_check(*forth.memory == 123);
 }
 
@@ -43,49 +43,49 @@ MU_TEST(forth_tests_codeword) {
     struct forth forth = {0};
     forth_init(&forth, stdin, 100, 100, 100);
 
-    mu_check(forth.latest == NULL);
+    mu_check(forth.latest == 0);
 
-    struct word *w1 = word_add(&forth, strlen("TEST1"), "TEST1");
+    offset w1 = word_add(&forth, strlen("TEST1"), "TEST1");
     forth_emit(&forth, 123);
     mu_check(forth.latest == w1);
 
-    struct word *w2 = word_add(&forth, strlen("TEST2"), "TEST2");
-    mu_check((*(cell*)word_code(w1)) == 123);
-    mu_check((void*)w2 > word_code(w1));
+    offset w2 = word_add(&forth, strlen("TEST2"), "TEST2");
+    mu_check((forth.memory[word_code(&forth, w1)]) == 123);
+    mu_check(w2 > word_code(&forth, w1));
     mu_check(forth.latest == w2);
 
-    mu_check(word_find(forth.latest, strlen("TEST1"), "TEST1") == w1);
-    mu_check(word_find(forth.latest, strlen("TEST2"), "TEST2") == w2);
-    mu_check(word_find(forth.latest, strlen("TEST"), "TEST") == NULL);
+    mu_check(word_find(&forth, forth.latest, strlen("TEST1"), "TEST1") == w1);
+    mu_check(word_find(&forth, forth.latest, strlen("TEST2"), "TEST2") == w2);
+    mu_check(word_find(&forth, forth.latest, strlen("TEST"), "TEST") == 0);
 }
 
 MU_TEST(forth_tests_compileword) {
     struct forth forth = {0};
-    forth_init(&forth, stdin, 100, 100, 100);
+    forth_init(&forth, stdin, 1000, 1000, 1000);
     words_add(&forth);
 
-    const struct word *dup = word_find(forth.latest, strlen("dup"), "dup");
-    const struct word *mul = word_find(forth.latest, strlen("*"), "*");
-    const struct word *exit = word_find(forth.latest, strlen("exit"), "exit");
-    const struct word *square = word_find(forth.latest, strlen("square"), "square");
+    offset dup = word_find(&forth, forth.latest, strlen("dup"), "dup");
+    offset mul = word_find(&forth, forth.latest, strlen("*"), "*");
+    offset exit = word_find(&forth, forth.latest, strlen("exit"), "exit");
+    offset square = word_find(&forth, forth.latest, strlen("square"), "square");
     mu_check(square);
-    struct word **words = (struct word**)word_code(square);
-    mu_check(words[0] == dup);
-    mu_check(words[1] == mul);
-    mu_check(words[2] == exit);
-    struct word *w1 = word_add(&forth, strlen("TEST1"), "TEST1");
-    mu_check((void*)w1 > (void*)(words+2));
+    offset words = word_code(&forth, square);
+    mu_check(*(offset*)(forth.memory + words) == dup);
+    mu_check(*(offset*)(forth.memory + words + 1) == mul);
+    mu_check(*(offset*)(forth.memory + words + 2) == exit);
+    offset w1 = word_add(&forth, strlen("TEST1"), "TEST1");
+    mu_check(w1 > words+2);
 }
 
 MU_TEST(forth_tests_literal) {
     struct forth forth = {0};
-    forth_init(&forth, stdin, 100, 100, 100);
+    forth_init(&forth, stdin, 1000, 1000, 1000);
     words_add(&forth);
 
-    const struct word *literal = word_find(forth.latest, strlen("lit"), "lit");
-    const struct word *exit = word_find(forth.latest, strlen("exit"), "exit");
-    struct word *test = word_add(&forth, strlen("TEST"), "TEST");
-    test->compiled = true;
+    offset literal = word_find(&forth, forth.latest, strlen("lit"), "lit");
+    offset exit = word_find(&forth, forth.latest, strlen("exit"), "exit");
+    offset test = word_add(&forth, strlen("TEST"), "TEST");
+    WORD_PTR(&forth, test)->compiled = 1;
     forth_emit(&forth, (cell)literal);
     forth_emit(&forth, 4567);
     forth_emit(&forth, (cell)exit);
