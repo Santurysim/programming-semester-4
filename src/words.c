@@ -271,19 +271,19 @@ void memory_read(struct forth *forth)
 
 void memory_write(struct forth *forth)
 {
-    cell* address = (cell*)forth_iptr_pop(forth);
+    offset address = (offset)forth_pop(forth);
     cell value = forth_pop(forth);
-    *address = value;
+    forth->memory[address] = value;
 }
 
 void here(struct forth *forth)
 {
-    forth_iptr_push(forth, (intptr_t)&forth->memory_free);
+    forth_iptr_push(forth, (intptr_t)(&forth->memory_free));
 }
 
 void branch(struct forth *forth)
 {
-    forth->executing += ((size_t)forth->memory[forth->executing])/sizeof(cell);
+    forth->executing += ((size_t)forth->memory[forth->executing]) / sizeof(cell);
 }
 
 void branch0(struct forth *forth)
