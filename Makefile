@@ -80,8 +80,8 @@ check: build build/test
 # Команда для оценки уровня покрытия кода тестами
 .PHONY = coverage
 coverage: build/test check
-	cd build && ../bin/gcovr.sh -r .. --html --html-details -o coverage.html
-	# gcovr -r . --html --html-details -o build/coverage.html
+	# cd build && ../bin/gcovr.sh -r .. --html --html-details -o coverage.html
+	gcovr -r . --html --html-details -o build/coverage.html
 	# kcov --include-path=./src build/coverage $<
 
 build:

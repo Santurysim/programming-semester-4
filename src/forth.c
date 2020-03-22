@@ -30,7 +30,7 @@ int forth_init(struct forth *forth, FILE *input,
     forth->is_compiling = false;
     forth->input = input;
 
-    return forth->memory == NULL || forth->sp0 == NULL;
+    return forth->memory == NULL || forth->sp0 == NULL || forth->rp0 == NULL;
 }
 
 void forth_free(struct forth *forth)
@@ -135,6 +135,7 @@ int forth_add_compileword(struct forth *forth,
 {
     struct word *word = word_add(forth, strlen(name), name);
     word->compiled = true;
+    word->hidden = true;
     while (*words) {
         const struct word* word = word_find(forth->latest, strlen(*words), *words);
         if (!word) {
@@ -144,6 +145,7 @@ int forth_add_compileword(struct forth *forth,
         forth_emit(forth, (cell)word);
         words += 1;
     }
+    word->hidden = false;
     return 0;
 }
 
@@ -155,7 +157,7 @@ enum forth_result read_word(FILE* source,
     size_t buffer_size, char buffer[buffer_size], size_t *length)
 {
     size_t l = 0;
-    int c; 
+    int c;
     while ((c = fgetc(source)) != EOF && l < buffer_size) {
         // isspace(c) → l == 0
         if (isspace(c)) {
