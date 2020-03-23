@@ -1,0 +1,6 @@
+language: c
+script: make && make check
+branches:
+  only:
+  - step-3
+  - step-3-16bit
