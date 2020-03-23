@@ -57,12 +57,13 @@ build/%.cpp.o: src/%.cpp
 	$(CXX) $(CFLAGS_COMMON) $(CFLAGS) -c $< -o $@
 
 build/test: src/test.cpp
-	$(CXX) $(CFLAGS_COVERAGE) $(CFLAGS_COMMON) $(CFLAGS) $< -o $@
+	$(CXX) $(CFLAGS_COVERAGE) $(CFLAGS_COMMON) $(CFLAGS) $< -o $@ -lgcov
 
 # Очистка — удаляем всё из каталога build
 clean:
 	rm -rf build/*
 	rm -f ./*.gc*
+	rm -f ./vgcore.*
 
 # Мы подключаем все файлы с расширением .d, 
 # которые найдём в каталоге build.
@@ -77,11 +78,14 @@ check: build build/test
 	cd build && ./test
 
 # Команда для оценки уровня покрытия кода тестами
-.PHONY = coverage
+.PHONY = coverage coverage_gcov
 coverage: build/test check
 	# cd build && ../bin/gcovr.sh -r .. --html --html-details -o coverage.html
 	gcovr -r . --html --html-details -o build/coverage.html
 	# kcov --include-path=./src build/coverage $<
+
+coverage_gcov: build/test check
+	gcov test
 
 build:
 	mkdir -p build

@@ -1,5 +1,6 @@
 language: c++
-script: make && make check
+script: make && make check && make coverage_gcov
+after_success: bash <(curl -s https://codecov.io/bash) 
 branches:
   only:
   - master
