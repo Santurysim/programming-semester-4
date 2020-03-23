@@ -1,5 +1,7 @@
 # Работа на ЭВМ и программирование, семестр 4
 
+[![Build Status](https://travis-ci.org/Santurysim/programming-semester-4.svg?branch=step-3-16bit)](https://travis-ci.org/Santurysim/programming-semester-4)
+
 Материалы занятий.
 
 # Задачи
