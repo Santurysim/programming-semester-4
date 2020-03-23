@@ -1,4 +1,3 @@
-#include "minunit.h"
 #include "forth.test.c"
 
 int main(void) {

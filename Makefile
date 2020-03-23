@@ -64,6 +64,7 @@ build/test: src/test.c
 clean:
 	rm -rf build/*
 	rm -f ./*.gc*
+	rm -f vgcore.*
 
 # Мы подключаем все файлы с расширением .d, 
 # которые найдём в каталоге build.
@@ -78,11 +79,14 @@ check: build build/test
 	cd build && ./test
 
 # Команда для оценки уровня покрытия кода тестами
-.PHONY = coverage
+.PHONY = coverage coverage_gcov
 coverage: build/test check
 	# cd build && ../bin/gcovr.sh -r .. --html --html-details -o coverage.html
 	gcovr -e src/test.c -e src/forth.test.c -e include/minunit.h -r . --html --html-details -o build/coverage.html
 	# kcov --include-path=./src build/coverage $<
+
+coverage_gcov: build build/test
+	gcov test
 
 build:
 	mkdir -p build
