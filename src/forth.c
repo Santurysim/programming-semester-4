@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -252,15 +253,15 @@ static void forth_run_word(struct forth *forth, const struct word *word)
         }
 
         word = *forth->executing;
-		forth->executing += 1;
+        forth->executing += 1;
     } while (word != forth->stopword);
 	forth->executing = &forth->stopword;
 }
 
 static intptr_t strtoiptr(const char* ptr, char** endptr, int base) {
-    if (sizeof(intptr_t) <= sizeof(long)) {
+#if INTPTR_MAX < LONG_MAX
         return (intptr_t)strtol(ptr, endptr, base);
-    } else {
+#else 
         return (intptr_t)strtoll(ptr, endptr, base);
-    }
+#endif
 }
