@@ -12,13 +12,24 @@ int main(int argc, char **argv){
 	FILE *in;
     Forth forth(stdin, MAX_DATA, MAX_STACK, MAX_RETURN);
     forth.addMachineWords();
+	if(argc == 1){
+		try{
+			forth.run();
+		} catch (ForthException e) {
+			printf("Error: %s", e.getCause());
+			return 1;
+		}
+		return 0;
+	}
 	for(int i = 1; i < argc; i++){
 		if(!strncmp(argv[i], "-", 1))
-			break;
-		in = fopen(argv[i], "r");
-		if(!in){
-			printf("Unable to open file %s! Returning to interpreter mode!\n", argv[i]);
-			break;
+			in = stdin;
+		else{
+			in = fopen(argv[i], "r");
+			if(!in){
+				printf("Unable to open file %s! Exiting!\n", argv[i]);
+				return 1;
+			}
 		}
 		forth.setInput(in);
 		try{
@@ -28,14 +39,5 @@ int main(int argc, char **argv){
 			return 1;
 		}
 	}
-	forth.setInput(stdin);
-	try{
-		forth.run();
-	}
-	catch(ForthException e){
-		printf("Error: %s", e.getCause());
-		return 1;
-	}
-	
     return 0;
 }
