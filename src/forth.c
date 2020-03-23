@@ -159,7 +159,7 @@ enum forth_result read_word(FILE* source,
     size_t l = 0;
     int c;
     while ((c = fgetc(source)) != EOF && l < buffer_size) {
-        // isspace(c) → l == 0
+        // isspace(c) -> l == 0
         if (isspace(c)) {
             if (l == 0) {
                 continue;
@@ -232,13 +232,16 @@ static void forth_run_number(struct forth *forth,
 
 static void forth_run_word(struct forth *forth, const struct word *word)
 {
+	// Перед циклом и на первой итерации: *forth->executing == forth->stopword
+	// Инвариант цикла: word указывает на исполняемое слово,
+	// forth->executing - на следующее
     do {
         //printf("%.*s\n", (int)word->length, word->name);
         // FIXME: (1 балл) как избавиться от этого условия
         // и всегда безусловно увеличивать forth->executing на 1?
-        if (*forth->executing != forth->stopword) {
-            forth->executing += 1;
-        }
+        //if (*forth->executing != forth->stopword) {
+        //    forth->executing += 1;
+        //}
         if (!word->compiled) {
             // ISO C forbids conversion of object pointer to function pointer type
             const function code = ((struct { function fn; }*)word_code(word))->fn;
@@ -249,7 +252,9 @@ static void forth_run_word(struct forth *forth, const struct word *word)
         }
 
         word = *forth->executing;
+		forth->executing += 1;
     } while (word != forth->stopword);
+	forth->executing = &forth->stopword;
 }
 
 static intptr_t strtoiptr(const char* ptr, char** endptr, int base) {
