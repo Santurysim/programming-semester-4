@@ -54,7 +54,7 @@ MU_TEST(forth_tests_codeword) {
 }
 
 MU_TEST(forth_tests_compileword){
-	Forth forth(stdin, 100, 100, 100);
+	Forth forth(stdin, 200, 200, 200);
 	forth.addMachineWords();
 
 	const Word *dup = forth.getLatest()->find("dup", strlen("dup"));
@@ -72,7 +72,7 @@ MU_TEST(forth_tests_compileword){
 }
 
 MU_TEST(forth_tests_literal){
-	Forth forth(stdin, 100, 100, 100);
+	Forth forth(stdin, 200, 200, 200);
 	forth.addMachineWords();
 
 	const Word *literal = forth.getLatest()->find("lit", strlen("lit"));
