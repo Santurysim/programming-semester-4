@@ -2,3 +2,4 @@ ignore:
   - "include"
   - "src/forth.test.c"
   - "src/test.c"
+  - "include/minunit.h"
