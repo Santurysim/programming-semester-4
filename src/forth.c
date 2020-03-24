@@ -255,7 +255,7 @@ static void forth_run_word(struct forth *forth, const struct word *word)
         word = *forth->executing;
         forth->executing += 1;
     } while (word != forth->stopword);
-	forth->executing = &forth->stopword;
+    forth->executing = &forth->stopword;
 }
 
 static intptr_t strtoiptr(const char* ptr, char** endptr, int base) {

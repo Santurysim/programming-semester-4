@@ -151,6 +151,17 @@ MU_TEST(forth_tests_read_word){
     free(str1); free(str2); free(str3); free(str4);
 }
 
+/*MU_TEST(forth_tests_run_number){
+	struct forth forth = {0};
+}
+
+MU_TEST(forth_run){
+    const char* program = "1 1 + square";
+    struct forth forth = {0};
+    forth_init(&forth, stdin, 200, 200, 200);
+    words_add(&forth);
+}*/
+
 MU_TEST_SUITE(forth_tests) {
     MU_RUN_TEST(forth_tests_init_free);
     MU_RUN_TEST(forth_tests_align);
@@ -161,3 +172,4 @@ MU_TEST_SUITE(forth_tests) {
     MU_RUN_TEST(forth_tests_literal);
     MU_RUN_TEST(forth_tests_read_word);
 }
+// vim: ts=4 sw=4 expandtab
