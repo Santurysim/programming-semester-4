@@ -208,6 +208,274 @@ MU_TEST(forth_tests_run){
     free(program);
 }
 
+MU_TEST(words_tests_drop){
+    struct forth forth = {0};
+    forth_init(&forth, stdin, 200, 200, 200);
+
+    forth_push(&forth, 123);
+    drop(&forth);
+    mu_check(forth.sp0 == forth.sp);
+    forth_free(&forth);
+}
+
+MU_TEST(words_tests_dup){
+    struct forth forth = {0};
+    forth_init(&forth, stdin, 200, 200, 200);
+
+    forth_push(&forth, 123);
+    _dup(&forth);
+    mu_check(forth_pop(&forth) == 123);
+    mu_check(forth_pop(&forth) == 123);
+    forth_free(&forth);
+}
+
+MU_TEST_SUITE(words_tests_add){
+    struct forth forth = {0};
+    forth_init(&forth, stdin, 200, 200, 200);
+    
+    forth_push(&forth, 1);
+    forth_push(&forth, 2);
+    add(&forth);
+    mu_check(forth_pop(&forth) == 3);
+
+    forth_free(&forth);
+}
+
+MU_TEST_SUITE(words_tests_sub){
+    struct forth forth = {0};
+    forth_init(&forth, stdin, 200, 200, 200);
+    
+    forth_push(&forth, 3);
+    forth_push(&forth, 2);
+    sub(&forth);
+    mu_check(forth_pop(&forth) == 1);
+
+    forth_free(&forth);
+}
+
+MU_TEST_SUITE(words_tests_mul){
+    struct forth forth = {0};
+    forth_init(&forth, stdin, 200, 200, 200);
+    
+    forth_push(&forth, 3);
+    forth_push(&forth, 4);
+    mul(&forth);
+    mu_check(forth_pop(&forth) == 12);
+
+    forth_free(&forth);
+}
+
+MU_TEST_SUITE(words_tests_div){
+    struct forth forth = {0};
+    forth_init(&forth, stdin, 200, 200, 200);
+    
+    forth_push(&forth, 24);
+    forth_push(&forth, 7);
+    _div(&forth);
+    mu_check(forth_pop(&forth) == 3);
+
+    forth_free(&forth);
+}
+
+MU_TEST_SUITE(words_tests_mod){
+    struct forth forth = {0};
+    forth_init(&forth, stdin, 200, 200, 200);
+    
+    forth_push(&forth, 24);
+    forth_push(&forth, 11);
+    mod(&forth);
+    mu_check(forth_pop(&forth) == 2);
+
+    forth_free(&forth);
+}
+
+MU_TEST_SUITE(words_tests_swap){
+    struct forth forth = {0};
+    forth_init(&forth, stdin, 200, 200, 200);
+    
+    forth_push(&forth, 1);
+    forth_push(&forth, 2);
+    swap(&forth);
+    mu_check(forth_pop(&forth) == 1);
+    mu_check(forth_pop(&forth) == 2);
+
+    forth_free(&forth);
+}
+
+MU_TEST(words_tests_rot_back){
+    struct forth forth = {0};
+    forth_init(&forth, stdin, 200, 200, 200);
+
+    forth_push(&forth, 1);
+    forth_push(&forth, 2);
+    forth_push(&forth, 3);
+    rot_back(&forth);
+    mu_check(forth_pop(&forth) == 2);
+    mu_check(forth_pop(&forth) == 1);
+    mu_check(forth_pop(&forth) == 3);
+    forth_free(&forth);
+}
+
+MU_TEST(words_tests_rot){
+    struct forth forth = {0};
+    forth_init(&forth, stdin, 200, 200, 200);
+
+    forth_push(&forth, 1);
+    forth_push(&forth, 2);
+    forth_push(&forth, 3);
+    rot(&forth);
+    mu_check(forth_pop(&forth) == 1);
+    mu_check(forth_pop(&forth) == 3);
+    mu_check(forth_pop(&forth) == 2);
+    forth_free(&forth);
+}
+
+MU_TEST(words_tests_over){
+    struct forth forth = {0};
+    forth_init(&forth, stdin, 200, 200, 200);
+
+    forth_push(&forth, 1);
+    forth_push(&forth, 2);
+    over(&forth);
+    mu_check(forth_pop(&forth) == 1);
+    mu_check(forth_pop(&forth) == 2);
+    mu_check(forth_pop(&forth) == 1);
+    forth_free(&forth);
+}
+
+MU_TEST(words_tests_true){
+    struct forth forth = {0};
+    forth_init(&forth, stdin, 200, 200, 200);
+
+    _true(&forth);
+    mu_check(forth_pop(&forth) == -1);
+
+    forth_free(&forth);
+}
+
+MU_TEST(words_tests_false){
+    struct forth forth = {0};
+    forth_init(&forth, stdin, 200, 200, 200);
+
+    _false(&forth);
+    mu_check(forth_pop(&forth) == 0);
+
+    forth_free(&forth);
+}
+
+MU_TEST(words_tests_xor){
+    struct forth forth = {0};
+    forth_init(&forth, stdin, 200, 200, 200);
+
+    forth_push(&forth, 3); // 0011
+    forth_push(&forth, 5); // 0101
+    _xor(&forth);
+    mu_check(forth_pop(&forth) == 6); // 0110
+
+    forth_free(&forth);
+}
+
+MU_TEST(words_tests_or){
+    struct forth forth = {0};
+    forth_init(&forth, stdin, 200, 200, 200);
+
+    forth_push(&forth, 3); // 0011
+    forth_push(&forth, 5); // 0101
+    _or(&forth);
+    mu_check(forth_pop(&forth) == 7); // 0111
+
+    forth_free(&forth);
+}
+
+MU_TEST(words_tests_and){
+    struct forth forth = {0};
+    forth_init(&forth, stdin, 200, 200, 200);
+
+    forth_push(&forth, 3); // 0011
+    forth_push(&forth, 5); // 0101
+    _and(&forth);
+    mu_check(forth_pop(&forth) == 1); // 0001
+
+    forth_free(&forth);
+}
+
+MU_TEST(words_tests_not){
+    struct forth forth = {0};
+    forth_init(&forth, stdin, 200, 200, 200);
+
+    forth_push(&forth, 3); // 0011
+    _not(&forth);
+    mu_check(forth_pop(&forth) == ~3);
+
+    forth_free(&forth);
+}
+
+MU_TEST(words_tests_eq){
+    struct forth forth = {0};
+    forth_init(&forth, stdin, 200, 200, 200);
+
+    forth_push(&forth, 1);
+    forth_push(&forth, 1);
+    _eq(&forth);
+    mu_check(forth_pop(&forth) == -1);
+
+    forth_push(&forth, 1);
+    forth_push(&forth, 2);
+    _eq(&forth);
+    mu_check(forth_pop(&forth) == 0);
+
+    forth_free(&forth);
+}
+
+MU_TEST(words_tests_lt){
+    struct forth forth = {0};
+    forth_init(&forth, stdin, 200, 200, 200);
+
+    forth_push(&forth, 1);
+    forth_push(&forth, 1);
+    lt(&forth);
+    mu_check(forth_pop(&forth) == 0);
+
+    forth_push(&forth, 2);
+    forth_push(&forth, 1);
+    lt(&forth);
+    mu_check(forth_pop(&forth) == 0);
+
+    forth_push(&forth, 1);
+    forth_push(&forth, 2);
+    lt(&forth);
+    mu_check(forth_pop(&forth) == -1);
+
+    forth_free(&forth);
+}
+
+MU_TEST(words_tests_within){
+    struct forth forth = {0};
+    forth_init(&forth, stdin, 200, 200, 200);
+
+    forth_push(&forth, 123);
+    forth_push(&forth, 100);
+    forth_push(&forth, 200);
+    within(&forth);
+    mu_check(forth_pop(&forth) == -1);
+
+    forth_push(&forth, 400);
+    forth_push(&forth, 222);
+    forth_push(&forth, 333);
+    within(&forth);
+    mu_check(forth_pop(&forth) == 0);
+
+    forth_push(&forth, 123);
+    forth_push(&forth, 1000);
+    forth_push(&forth, 30);
+    within(&forth);
+    mu_check(forth_pop(&forth) == 0);
+
+    forth_free(&forth);
+}
+
+
+
 MU_TEST_SUITE(forth_tests) {
     MU_RUN_TEST(forth_tests_init_free);
     MU_RUN_TEST(forth_tests_align);
@@ -220,4 +488,35 @@ MU_TEST_SUITE(forth_tests) {
     MU_RUN_TEST(forth_tests_run_number);
     MU_RUN_TEST(forth_tests_run);
 }
+
+MU_TEST_SUITE(words_tests){
+    MU_RUN_TEST(words_tests_drop);
+    MU_RUN_TEST(words_tests_dup);
+    MU_RUN_TEST(words_tests_add);
+    MU_RUN_TEST(words_tests_sub);
+    MU_RUN_TEST(words_tests_mul);
+    MU_RUN_TEST(words_tests_div);
+    MU_RUN_TEST(words_tests_mod);
+    MU_RUN_TEST(words_tests_swap);
+    MU_RUN_TEST(words_tests_rot_back);
+    MU_RUN_TEST(words_tests_rot);
+    MU_RUN_TEST(words_tests_over);
+    MU_RUN_TEST(words_tests_true);
+    MU_RUN_TEST(words_tests_false);
+    MU_RUN_TEST(words_tests_xor);
+    MU_RUN_TEST(words_tests_or);
+    MU_RUN_TEST(words_tests_and);
+    MU_RUN_TEST(words_tests_not);
+    MU_RUN_TEST(words_tests_eq);
+    MU_RUN_TEST(words_tests_lt);
+    MU_RUN_TEST(words_tests_within);
+}
 // vim: ts=4 sw=4 expandtab
+/*
+MU_TEST(words_tests_template){
+    struct forth forth = {0};
+    forth_init(&forth, stdin, 200, 200, 200);
+
+    forth_free(&forth);
+}
+*/
