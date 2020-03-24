@@ -39,6 +39,8 @@ MU_TEST(forth_tests_data_stack) {
     mu_check(*forth_top(&forth) == 456);
     *forth_top(&forth) = 789;
     mu_check(forth_pop(&forth) == 789);
+
+    forth_free(&forth);
 }
 
 MU_TEST(forth_tests_emit) {
@@ -48,6 +50,8 @@ MU_TEST(forth_tests_emit) {
 
     mu_check(forth.memory_free > forth.memory);
     mu_check(*forth.memory == 123);
+
+    forth_free(&forth);
 }
 
 MU_TEST(forth_tests_codeword) {
@@ -68,6 +72,8 @@ MU_TEST(forth_tests_codeword) {
     mu_check(word_find(forth.latest, strlen("TEST1"), "TEST1") == w1);
     mu_check(word_find(forth.latest, strlen("TEST2"), "TEST2") == w2);
     mu_check(word_find(forth.latest, strlen("TEST"), "TEST") == NULL);
+
+    forth_free(&forth);
 }
 
 MU_TEST(forth_tests_compileword) {
@@ -92,6 +98,8 @@ MU_TEST(forth_tests_compileword) {
     int retval = forth_add_compileword(&forth, "test", dummy);
     mu_check(retval == 1);
     mu_check(forth.latest->hidden == true);
+
+    forth_free(&forth);
 }
 
 MU_TEST(forth_tests_literal) {
@@ -110,6 +118,8 @@ MU_TEST(forth_tests_literal) {
     forth_run_word(&forth, test);
     cell c = forth_pop(&forth);
     mu_check(c == 4567);
+
+    forth_free(&forth);
 }
 
 MU_TEST(forth_tests_read_word){
@@ -151,16 +161,52 @@ MU_TEST(forth_tests_read_word){
     free(str1); free(str2); free(str3); free(str4);
 }
 
-/*MU_TEST(forth_tests_run_number){
-	struct forth forth = {0};
-}
-
-MU_TEST(forth_run){
-    const char* program = "1 1 + square";
+MU_TEST(forth_tests_run_number){
+	const cell *test;
+    const struct word **code_ptr;
+    struct word *word;
+    const struct word *lit;
     struct forth forth = {0};
+    const char *str1 = "1";
+    const char *str2 = "foo";
     forth_init(&forth, stdin, 200, 200, 200);
     words_add(&forth);
-}*/
+
+    forth_run_number(&forth, strlen(str1), str1);
+    mu_check(forth_pop(&forth) == 1);
+
+    test = forth.sp;
+    forth_run_number(&forth, strlen(str2), str2);
+    mu_check(forth.sp == test);
+
+    word = word_add(&forth, strlen("bar"), "bar");
+    lit = word_find(forth.latest, strlen("lit"), "lit");
+    forth.is_compiling = true;
+    word->compiled = true;
+    forth_run_number(&forth, strlen(str1), str1);
+    code_ptr = (const struct word**)word_code(word);
+    mu_check(*code_ptr == lit);
+    code_ptr += 1;
+    mu_check((cell)(*code_ptr) == 1);
+
+    forth_free(&forth);
+}
+
+MU_TEST(forth_tests_run){
+    char *program = strdup(": init_fib 1 1 ; : next_fib swap over + ; init_fib next_fib next_fib");
+    FILE *stream = fmemopen(program, strlen(program), "r");
+    struct forth forth = {0};
+    forth_init(&forth, stream, 200, 200, 200);
+    words_add(&forth);
+    forth_run(&forth);
+
+    mu_check(forth_pop(&forth) == 3);
+    mu_check(forth_pop(&forth) == 2);
+    
+    forth_free(&forth);
+    fclose(stream);
+    free(program);
+}
 
 MU_TEST_SUITE(forth_tests) {
     MU_RUN_TEST(forth_tests_init_free);
@@ -171,5 +217,7 @@ MU_TEST_SUITE(forth_tests) {
     MU_RUN_TEST(forth_tests_compileword);
     MU_RUN_TEST(forth_tests_literal);
     MU_RUN_TEST(forth_tests_read_word);
+    MU_RUN_TEST(forth_tests_run_number);
+    MU_RUN_TEST(forth_tests_run);
 }
 // vim: ts=4 sw=4 expandtab
