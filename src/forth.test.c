@@ -474,6 +474,179 @@ MU_TEST(words_tests_within){
     forth_free(&forth);
 }
 
+MU_TEST(words_tests_rstack){
+    struct forth forth = {0};
+    const struct word *square;
+    forth_init(&forth, stdin, 200, 200, 200);
+    words_add(&forth);
+    square = word_find(forth.latest, strlen("square"), "square");
+    forth_push(&forth, (cell)forth.stopword);
+    rpush(&forth);
+    mu_check(*forth.rp0 == (cell)forth.stopword);
+    forth_push_return(&forth, (cell)square);
+    forth_push_return(&forth, (cell)square);
+    rpop(&forth);
+    mu_check(forth_pop(&forth) == (cell)square);
+    rtop(&forth);
+    mu_check(forth_pop(&forth) == (cell)forth.stopword);
+
+    forth_free(&forth);
+}
+
+MU_TEST(words_tests_memory){
+    cell *foo;
+    struct forth forth = {0};
+    forth_init(&forth, stdin, 200, 200, 200);
+    foo = (intptr_t*)malloc(sizeof(intptr_t));
+    *foo = 123;
+
+    forth_push(&forth, (cell)foo);
+    memory_read(&forth);
+    mu_check(forth_pop(&forth) == *foo);
+    forth_push(&forth, 567);
+
+    forth_free(&forth);
+    free(foo);
+}
+
+MU_TEST(words_tests_here){
+    struct forth forth = {0};
+    forth_init(&forth, stdin, 200, 200, 200);
+
+    here(&forth);
+    mu_check(forth_pop(&forth) == (cell)&forth.memory_free);
+
+    forth_free(&forth);
+}
+
+MU_TEST(words_tests_branch){
+    struct forth forth = {0};
+    const struct word *dup, *xor_word;
+    forth_init(&forth, stdin, 200, 200, 200);
+    words_add(&forth);
+    word_add(&forth, strlen("foo"), "foo");
+    dup = word_find(forth.latest, strlen("dup"), "dup");
+    xor_word = word_find(forth.latest, strlen("xor"), "xor");
+    forth.executing = (struct word**)forth.memory_free;
+    forth_emit(&forth, 2*sizeof(cell));
+    forth_emit(&forth, (cell)xor_word);
+    forth_emit(&forth, (cell)dup);
+    branch(&forth);
+    mu_check(*forth.executing == dup);
+
+    forth_free(&forth);
+}
+
+MU_TEST(words_tests_branch0){
+    struct forth forth = {0};
+    const struct word *dup, *xor_word;
+    cell *code_ptr;
+    forth_init(&forth, stdin, 200, 200, 200);
+    words_add(&forth);
+    word_add(&forth, strlen("foo"), "foo");
+    dup = word_find(forth.latest, strlen("dup"), "dup");
+    xor_word = word_find(forth.latest, strlen("xor"), "xor");
+    code_ptr = forth.memory_free;
+    forth.executing = (struct word**)code_ptr;
+
+    forth_push(&forth, 0);
+    forth_emit(&forth, 2*sizeof(cell));
+    forth_emit(&forth, (cell)xor_word);
+    forth_emit(&forth, (cell)dup);
+    branch0(&forth);
+    mu_check(*forth.executing == dup);
+
+    forth.executing = (struct word**)code_ptr;
+    forth_push(&forth, -1);
+    branch0(&forth);
+    mu_check(*forth.executing == xor_word);
+    
+    forth_free(&forth);
+}
+
+MU_TEST(words_tests_immediate) {
+    struct forth forth = {0};
+    forth_init(&forth, stdin, 200, 200, 200);
+    words_add(&forth);
+    
+    immediate(&forth);
+    mu_check(forth.latest->immediate);
+
+    forth_free(&forth);
+}
+
+MU_TEST(words_tests_next_word){
+    char *test;
+    char *word = strdup("bar");
+    FILE *input = fmemopen(word, strlen("bar"), "r");
+    struct forth forth = {0};
+    forth_init(&forth, input, 200, 200, 200);
+    next_word(&forth);
+
+    mu_check(forth_pop(&forth) == (cell)strlen(word));
+    test = (char*)forth_pop(&forth);
+    mu_check(!strncmp(word, test, 3));
+
+    forth_free(&forth);
+    fclose(input);
+    free(word);
+}
+
+MU_TEST(words_tests_find){
+    struct forth forth = {0};
+    char *word = strdup("_xor");
+    const struct word *xor_word;
+    forth_init(&forth, stdin, 200, 200, 200);
+    words_add(&forth);
+    xor_word = word_find(forth.latest, strlen("_xor"), "_xor");
+
+    forth_push(&forth, (cell)word);
+    forth_push(&forth, strlen("_xor"));
+    find(&forth);
+
+    mu_check((struct word*)forth_pop(&forth) == xor_word);
+
+    forth_free(&forth);
+    free(word);
+}
+
+MU_TEST(words_tests_word_code){
+    struct forth forth = {0};
+    const struct word *word;
+    forth_init(&forth, stdin, 200, 200, 200);
+    words_add(&forth);
+    word = word_find(forth.latest, strlen("immediate"), "immediate");
+
+    forth_push(&forth, (cell)word);
+    _word_code(&forth);
+    mu_check(forth_pop(&forth) == (cell)word_code(word));
+
+    forth_free(&forth);
+}
+
+MU_TEST(words_tests_comma){
+    struct forth forth = {0};
+    forth_init(&forth, stdin, 200, 200, 200);
+    
+    forth_push(&forth, 1);
+    comma(&forth);
+    mu_check(*forth.memory == 1);
+
+    forth_free(&forth);
+}
+
+MU_TEST(words_tests_next){
+    struct forth forth = {0};
+    forth_init(&forth, stdin, 200, 200, 200);
+
+    forth.executing = (struct word**)forth.memory;
+    forth_emit(&forth, 123);
+    forth_emit(&forth, 456);
+    next(&forth);
+    mu_check(*(cell*)forth.executing == 456);
+
+    forth_free(&forth);
+}
 
 
 MU_TEST_SUITE(forth_tests) {
@@ -510,13 +683,16 @@ MU_TEST_SUITE(words_tests){
     MU_RUN_TEST(words_tests_eq);
     MU_RUN_TEST(words_tests_lt);
     MU_RUN_TEST(words_tests_within);
+    MU_RUN_TEST(words_tests_rstack);
+    MU_RUN_TEST(words_tests_memory);
+    MU_RUN_TEST(words_tests_here);
+    MU_RUN_TEST(words_tests_branch);
+    MU_RUN_TEST(words_tests_branch0);
+    MU_RUN_TEST(words_tests_immediate);
+    MU_RUN_TEST(words_tests_next_word);
+    MU_RUN_TEST(words_tests_find);
+    MU_RUN_TEST(words_tests_word_code);
+    MU_RUN_TEST(words_tests_comma);
+    MU_RUN_TEST(words_tests_next);
 }
 // vim: ts=4 sw=4 expandtab
-/*
-MU_TEST(words_tests_template){
-    struct forth forth = {0};
-    forth_init(&forth, stdin, 200, 200, 200);
-
-    forth_free(&forth);
-}
-*/

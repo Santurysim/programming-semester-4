@@ -233,7 +233,7 @@ static void forth_run_number(struct forth *forth,
 
 static void forth_run_word(struct forth *forth, const struct word *word)
 {
-	// Перед циклом и на первой итерации: *forth->executing == forth->stopword
+	// Перед циклом и на первой итерации: *forth->executing == forth->stopword ???
 	// Инвариант цикла: word указывает на исполняемое слово,
 	// forth->executing - на следующее
     do {
