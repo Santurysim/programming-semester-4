@@ -33,7 +33,7 @@ Forth::Forth(FILE *_input, size_t _memorySize, size_t _stackSize, size_t _return
 	this->executing = NULL;
 	this->compiling = false;
 	
-	if(!(this->memory) || !(this->stackBottom))
+	if(!(this->memory) || !(this->stackBottom) || !(this->returnStackBottom))
 		throw ForthException("Forth constructor: failed to allocate memory");
 }
 
@@ -153,7 +153,8 @@ Word* Forth::addWord(const char *name, uint8_t length, bool isCompiled){
 }
 
 int Forth::addCompiledWord(const char *name, const char **words){
-	this->addWord(name, strlen(name), true);
+	Word *newWord = this->addWord(name, strlen(name), true);
+	newWord->setHidden(true);
 	while(*words) {
 		const Word *word = this->latest->find(*words, strlen(*words));
 		if(!word) {
@@ -162,6 +163,7 @@ int Forth::addCompiledWord(const char *name, const char **words){
 		this->emit((cell)word);
 		words += 1;
 	}
+	newWord->setHidden(false);
 	return 0;
 }
 
@@ -361,6 +363,10 @@ void Word::setImmediate(bool _immediate){
 
 void Word::setHidden(bool _hidden){
 	this->hidden = _hidden;
+}
+
+bool Word::isHidden() const{
+	return this->hidden;
 }
 
 // End of Word implementation

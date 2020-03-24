@@ -81,7 +81,8 @@ check: build build/test
 .PHONY = coverage coverage_gcov
 coverage: build/test check
 	# cd build && ../bin/gcovr.sh -r .. --html --html-details -o coverage.html
-	gcovr -r . --html --html-details -o build/coverage.html
+	gcovr -e src/test.cpp -e src/forth.test.cpp -e include/forth.h -e include/minunit.h \
+		-r . --html --html-details -o build/coverage.html
 	# kcov --include-path=./src build/coverage $<
 
 coverage_gcov: build/test check

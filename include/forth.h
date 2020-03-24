@@ -112,8 +112,6 @@ class Forth{
 		size_t memorySize;
 		size_t dataSize;
 		size_t returnStackSize;
-
-		void runNumber(const char *wordBuffer, size_t length);
 	public:
 		Forth(FILE *_input, size_t _memorySize, size_t _stackSize, size_t _returnStackSize);
 		~Forth();
@@ -154,6 +152,7 @@ class Forth{
 
 		void setCompiling(bool _compiling);
 		void runWord(const Word*);
+		void runNumber(const char *wordBuffer, size_t length);
 };
 
 void printCell(cell c);
