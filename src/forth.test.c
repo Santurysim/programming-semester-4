@@ -504,7 +504,9 @@ MU_TEST(words_tests_memory){
     memory_read(&forth);
     mu_check(forth_pop(&forth) == *foo);
     forth_push(&forth, 567);
-
+    forth_push(&forth, (cell)foo);
+    memory_write(&forth);
+    mu_check(*foo == 567);
     forth_free(&forth);
     free(foo);
 }
