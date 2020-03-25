@@ -1,4 +1,7 @@
 #pragma once
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -8,6 +11,13 @@ struct forth;
 typedef intptr_t cell;
 
 #define MAX_WORD 32
+
+enum forth_result {
+    FORTH_OK,
+    FORTH_EOF,
+    FORTH_WORD_NOT_FOUND,
+    FORTH_BUFFER_OVERFLOW,
+};
 
 struct word {
     struct word *next;
@@ -28,6 +38,10 @@ struct forth {
     bool is_compiling;
 
     FILE* input;
+    FILE* output;
+    const char *prompt;
+    enum forth_result (*read_word_func)(FILE* source, const char* prompt,
+        size_t buffer_size, char buffer[buffer_size], size_t *length);
 
     cell *memory_free;
     cell *sp0;
@@ -46,9 +60,12 @@ const struct word* word_find(const struct word* first,
 
 typedef void (*function)(struct forth *forth);
 
-int forth_init(struct forth *forth, FILE* input,
+int forth_init(struct forth *forth, FILE* input, FILE* output,
     size_t memory, size_t stack, size_t ret);
 void forth_free(struct forth *forth);
+void forth_set_input(struct forth *forth, FILE *input);
+void forth_set_output(struct forth *forth, FILE *output);
+void forth_configure_io(struct forth *forth);
 
 void forth_push(struct forth *forth, cell value);
 cell forth_pop(struct forth *forth);
@@ -61,16 +78,12 @@ void forth_add_codeword(struct forth *forth,
 int forth_add_compileword(struct forth *forth,
     const char* name, const char** words);
 
-void cell_print(cell c);
+void cell_print(FILE *output, cell c);
 
-enum forth_result {
-    FORTH_OK,
-    FORTH_EOF,
-    FORTH_WORD_NOT_FOUND,
-    FORTH_BUFFER_OVERFLOW,
-};
+enum forth_result read_word(FILE* source, const char *ignore,
+    size_t buffer_size, char buffer[buffer_size], size_t *length);
 
-enum forth_result read_word(FILE* source,
+enum forth_result rl_read_word(FILE* ignore, const char *prompt,
     size_t buffer_size, char buffer[buffer_size], size_t *length);
 
 enum forth_result forth_run(struct forth* forth);

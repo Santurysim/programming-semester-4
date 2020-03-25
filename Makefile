@@ -17,6 +17,8 @@ TEST_MODULES = test.c
 # Можно вызвать с другими правилами: make CFLAGS="-Ofast -march=native" 
 CFLAGS := -g -O0
 
+LDFLAGS=-lreadline
+
 # Для сборки программы build/cforth нужен каталог build (в конце)
 # и список объектных файлов,
 # который получается из списка исходных файлов в переменной CFORTH_MODULES,
@@ -28,7 +30,7 @@ CFLAGS := -g -O0
 # Вместо $@ подставляется имя результата (build/cforth)
 
 build/cforth: $(CFORTH_MODULES:%=build/%.o)
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
 # Общие (неизменяемые) настройки компилятора
 # -MMD — сгенерировать файлы с описанием зависимостей (см. DEPS далее)
@@ -58,7 +60,7 @@ build/%.c.o: src/%.c
 	$(CC) $(CFLAGS_COMMON) $(CFLAGS) -c $< -o $@
 
 build/test: src/test.c
-	$(CC) $(CFLAGS_COVERAGE) $(CFLAGS_COMMON) $(CFLAGS) $< -o $@
+	$(CC) $(CFLAGS_COVERAGE) $(CFLAGS_COMMON) $(CFLAGS) $< -o $@ $(LDFLAGS)
 
 # Очистка — удаляем всё из каталога build
 clean:

@@ -5,8 +5,7 @@
 
 #include "words.h"
 
-void words_add(struct forth *forth)
-{
+void words_add(struct forth *forth){
     int status = 0;
     static const char* square[] = { "dup", "*", "exit" };
 
@@ -138,10 +137,10 @@ void rot(struct forth *forth) {
 void show(struct forth *forth) {
     const cell *c = forth->sp0;
     while (c <= forth_top(forth)) {
-        cell_print(*c);
+        cell_print(forth->output, *c);
         c += 1;
     }
-    printf("(top)\n");
+    fprintf(forth->output, "(top)\n");
 }
 
 void over(struct forth *forth) {
@@ -209,20 +208,18 @@ void forth_exit(struct forth *forth) {
     forth->executing = (struct word**)forth_pop_return(forth);
 }
 
-void literal(struct forth *forth)
-{
+void literal(struct forth *forth){
     cell value = *(cell*)forth->executing;
     forth->executing += 1;
     forth_push(forth, value);
 }
 
-void compile_start(struct forth *forth)
-{
+void compile_start(struct forth *forth){
     char buffer[MAX_WORD+1];
     size_t length;
     struct word* word;
 
-    read_word(forth->input, MAX_WORD, buffer, &length);
+    forth->read_word_func(forth->input, forth->prompt, MAX_WORD, buffer, &length);
     assert(length > 0);
 
     word = word_add(forth, (uint8_t)length, buffer);
@@ -231,8 +228,7 @@ void compile_start(struct forth *forth)
     word->compiled = true;
 }
 
-void compile_end(struct forth *forth)
-{
+void compile_end(struct forth *forth){
     const struct word *exit = word_find(forth->latest, strlen("exit"), "exit");
     assert(exit);
     forth_emit(forth, (cell)exit);
@@ -257,37 +253,32 @@ void rtop(struct forth  *forth) {
 void rshow(struct forth *forth) {
     const cell *c = forth->rp0;
     while (c < forth->rp) {
-        cell_print(*c);
+        cell_print(forth->output, *c);
         c += 1;
     }
-    printf("(r-top)\n");
+    fprintf(forth->output, "(r-top)\n");
 }
 
 
-void memory_read(struct forth *forth)
-{
+void memory_read(struct forth *forth){
     forth_push(forth, *(cell*)(forth_pop(forth)));
 }
 
-void memory_write(struct forth *forth)
-{
+void memory_write(struct forth *forth){
     cell* address = (cell*)forth_pop(forth);
     cell value = forth_pop(forth);
     *address = value;
 }
 
-void here(struct forth *forth)
-{
+void here(struct forth *forth){
     forth_push(forth, (cell)&forth->memory_free);
 }
 
-void branch(struct forth *forth)
-{
+void branch(struct forth *forth){
     forth->executing += ((size_t)forth->executing[0])/sizeof(cell);
 }
 
-void branch0(struct forth *forth)
-{
+void branch0(struct forth *forth){
     cell offset = *(cell*)(forth->executing);
     cell value = forth_pop(forth);
     if (!value) {
@@ -297,48 +288,41 @@ void branch0(struct forth *forth)
     }
 }
 
-void immediate(struct forth *forth)
-{
+void immediate(struct forth *forth){
     forth->latest->immediate = !forth->latest->immediate;
 }
 
-void next_word(struct forth *forth)
-{
+void next_word(struct forth *forth){
     size_t length;
     static char buffer[MAX_WORD+1];
-    read_word(forth->input, MAX_WORD+1, buffer, &length);
+    forth->read_word_func(forth->input, forth->prompt, MAX_WORD+1, buffer, &length);
     forth_push(forth, (cell)buffer);
     forth_push(forth, (cell)length);
 }
 
-void find(struct forth *forth)
-{
+void find(struct forth *forth){
     uint8_t length = (uint8_t)forth_pop(forth);
     const char *name = (const char*)forth_pop(forth);
     const struct word *word = word_find(forth->latest, length, name);
     forth_push(forth, (cell)word);
 }
 
-void _word_code(struct forth *forth)
-{
+void _word_code(struct forth *forth){
     const struct word* word = (const struct word*)forth_pop(forth);
     const void *code = word_code(word);
     forth_push(forth, (cell)code);
 }
 
-void comma(struct forth *forth)
-{
+void comma(struct forth *forth){
     forth_emit(forth, forth_pop(forth));
 }
 
-void next(struct forth *forth)
-{
+void next(struct forth *forth){
     forth->executing += 1;
 }
 
-void interpreter_stub(struct forth *forth)
-{
+void interpreter_stub(struct forth *forth){
     (void)forth;
-    printf("ERROR: return stack underflow (must exit to interpreter)\n");
+    fprintf(stderr, "ERROR: return stack underflow (must exit to interpreter)\n");
     exit(2);
 }
