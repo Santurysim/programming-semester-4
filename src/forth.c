@@ -200,6 +200,7 @@ enum forth_result read_word(FILE *source, const char *ignore,
     return FORTH_EOF;
 }
 
+//GCOV_EXCL_START
 enum forth_result rl_read_word(FILE *source, const char *prompt,
     size_t buffer_size, char buffer[buffer_size], size_t *length){
     static char *line_read = NULL;
@@ -229,6 +230,7 @@ enum forth_result rl_read_word(FILE *source, const char *prompt,
         return FORTH_OK;
     }
 }
+//GCOV_EXCL_STOP
 
 static void forth_run_word(struct forth *forth, const struct word *word);
 static void forth_run_number(struct forth *forth,

@@ -321,8 +321,10 @@ void next(struct forth *forth){
     forth->executing += 1;
 }
 
+// GCOV_EXCL_START
 void interpreter_stub(struct forth *forth){
     (void)forth;
     fprintf(stderr, "ERROR: return stack underflow (must exit to interpreter)\n");
     exit(2);
 }
+// GCOV_EXCL_STOP
