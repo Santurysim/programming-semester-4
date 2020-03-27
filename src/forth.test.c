@@ -113,7 +113,6 @@ MU_TEST(forth_tests_literal) {
     const struct word *literal = word_find(forth.latest, strlen("lit"), "lit");
     const struct word *exit = word_find(forth.latest, strlen("exit"), "exit");
     struct word *test = word_add(&forth, strlen("TEST"), "TEST");
-    test->compiled = true;
     forth_emit(&forth, enter);
     forth_emit(&forth, (cell)literal);
     forth_emit(&forth, 4567);
@@ -208,7 +207,6 @@ MU_TEST(forth_tests_run_number){
     word = word_add(&forth, strlen("bar"), "bar");
     lit = word_find(forth.latest, strlen("lit"), "lit");
     forth.is_compiling = true;
-    word->compiled = true;
     forth_run_number(&forth, strlen(str1), str1);
     code_ptr = (const struct word**)word_code(word);
     mu_check(*code_ptr == lit);

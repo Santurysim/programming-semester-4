@@ -146,8 +146,7 @@ static uintptr_t align(uintptr_t value, uint8_t alignment){
 
 void forth_add_codeword(struct forth *forth,
     const char* name, const function handler){
-    struct word *word = word_add(forth, strlen(name), name);
-    word->compiled = false;
+    word_add(forth, strlen(name), name);
     assert(strlen(name) <= 32);
     forth_emit(forth, (cell)handler);
 }
@@ -156,7 +155,6 @@ void forth_add_codeword(struct forth *forth,
 int forth_add_compileword(struct forth *forth,
     const char *name, const char** words){
     struct word *word = word_add(forth, strlen(name), name);
-    word->compiled = true;
     word->hidden = true;
     const struct word *entry_word = word_find(forth->latest, strlen("_enter"), "_enter");
     assert(entry_word);

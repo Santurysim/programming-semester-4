@@ -21,7 +21,6 @@ enum forth_result {
 
 struct word {
     struct word *next;
-    bool compiled;
     bool hidden;
     bool immediate;
     uint8_t length;

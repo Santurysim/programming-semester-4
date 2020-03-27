@@ -232,7 +232,6 @@ void compile_start(struct forth *forth){
     forth_emit(forth, (cell)forth_enter);
     forth->is_compiling = true;
     word->hidden = true;
-    word->compiled = true;
 }
 
 void compile_end(struct forth *forth){
