@@ -30,6 +30,7 @@ struct word {
 
 struct forth {
     struct word **executing;
+    const struct word *current;
     cell *sp;
     cell *rp;
     cell *memory;

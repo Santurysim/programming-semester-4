@@ -81,14 +81,11 @@ check: build build/test
 	cd build && ./test
 
 # Команда для оценки уровня покрытия кода тестами
-.PHONY = coverage coverage_gcov
+.PHONY = coverage
 coverage: build/test check
 	# cd build && ../bin/gcovr.sh -r .. --html --html-details -o coverage.html
 	gcovr -r . -e src/test.c -e src/forth.test.c -e include/minunit.h --exclude-throw-branches --html --html-details -o build/coverage.html
 	# kcov --include-path=./src build/coverage $<
-
-coverage_gcov: build build/test
-	gcov test
 
 build:
 	mkdir -p build

@@ -12,8 +12,13 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
+#if INTPTR_MAX < LONG_MAX
+#define strtoiptr(ptr, endptr, base) (intptr_t)strtol(ptr, endptr, base)
+#else
+#define strtoiptr(ptr, endptr, base) (intptr_t)strtoll(ptr, endptr, base)
+#endif
+
 static uintptr_t align(uintptr_t value, uint8_t alignment);
-static intptr_t strtoiptr(const char* ptr, char** endptr, int base);
 
 int forth_init(struct forth *forth, FILE *input, FILE *output,
     size_t memory, size_t stack, size_t ret){
@@ -29,6 +34,7 @@ int forth_init(struct forth *forth, FILE *input, FILE *output,
     forth->rp0 = malloc(forth->return_size * sizeof(cell));
     forth->rp = forth->rp0;
 
+    forth->current = NULL;
     forth->latest = NULL;
     forth->executing = NULL;
     forth->is_compiling = false;
@@ -152,6 +158,9 @@ int forth_add_compileword(struct forth *forth,
     struct word *word = word_add(forth, strlen(name), name);
     word->compiled = true;
     word->hidden = true;
+    const struct word *entry_word = word_find(forth->latest, strlen("_enter"), "_enter");
+    assert(entry_word);
+    forth_emit(forth, *(cell*)word_code(entry_word)); 
     while (*words) {
         const struct word* word = word_find(forth->latest, strlen(*words), *words);
         if (!word) {
@@ -282,25 +291,13 @@ static void forth_run_word(struct forth *forth, const struct word *word){
 	// Инвариант цикла: word указывает на исполняемое слово,
 	// forth->executing - на следующее
     do {
-        if (!word->compiled) {
-            // ISO C forbids conversion of object pointer to function pointer type
-            const function code = ((struct { function fn; }*)word_code(word))->fn;
-            code(forth);
-        } else {
-            forth_push_return(forth, (cell)forth->executing);
-            forth->executing = (struct word**)word_code(word);
-        }
-
+        forth->current = word;
+        // ISO C forbids conversion of object pointer to function pointer type
+        const function code = ((struct { function fn; }*)word_code(word))->fn;
+        code(forth);
+        
         word = *forth->executing;
         forth->executing += 1;
     } while (word != forth->stopword);
     forth->executing = &forth->stopword;
-}
-
-static intptr_t strtoiptr(const char* ptr, char** endptr, int base) {
-#if INTPTR_MAX < LONG_MAX
-        return (intptr_t)strtol(ptr, endptr, base);
-#else 
-        return (intptr_t)strtoll(ptr, endptr, base);
-#endif
 }

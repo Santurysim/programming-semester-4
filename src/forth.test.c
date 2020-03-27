@@ -81,15 +81,17 @@ MU_TEST(forth_tests_compileword) {
     forth_init(&forth, stdin, stdout, 200, 200, 200);
     words_add(&forth);
 
+    const struct word *enter = word_find(forth.latest, strlen("_enter"), "_enter");
     const struct word *dup = word_find(forth.latest, strlen("dup"), "dup");
     const struct word *mul = word_find(forth.latest, strlen("*"), "*");
     const struct word *exit = word_find(forth.latest, strlen("exit"), "exit");
     const struct word *square = word_find(forth.latest, strlen("square"), "square");
     mu_check(square);
     struct word **words = (struct word**)word_code(square);
-    mu_check(words[0] == dup);
-    mu_check(words[1] == mul);
-    mu_check(words[2] == exit);
+    mu_check(words[0] == *(struct word**)word_code(enter));
+    mu_check(words[1] == dup);
+    mu_check(words[2] == mul);
+    mu_check(words[3] == exit);
     struct word *w1 = word_add(&forth, strlen("TEST1"), "TEST1");
     mu_check((void*)w1 > (void*)(words+2));
 
@@ -107,10 +109,12 @@ MU_TEST(forth_tests_literal) {
     forth_init(&forth, stdin, stdout, 200, 200, 200);
     words_add(&forth);
 
+    cell enter = *(cell*)word_code(word_find(forth.latest, strlen("_enter"), "_enter"));
     const struct word *literal = word_find(forth.latest, strlen("lit"), "lit");
     const struct word *exit = word_find(forth.latest, strlen("exit"), "exit");
     struct word *test = word_add(&forth, strlen("TEST"), "TEST");
     test->compiled = true;
+    forth_emit(&forth, enter);
     forth_emit(&forth, (cell)literal);
     forth_emit(&forth, 4567);
     forth_emit(&forth, (cell)exit);

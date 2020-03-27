@@ -34,6 +34,7 @@ void words_add(struct forth *forth){
     forth_add_codeword(forth, "<", lt);
     forth_add_codeword(forth, "within", within);
 
+    forth_add_codeword(forth, "_enter", forth_enter);
     forth_add_codeword(forth, "exit", forth_exit);
     forth_add_codeword(forth, "lit", literal);
     forth_add_codeword(forth, ":", compile_start);
@@ -204,6 +205,11 @@ void within(struct forth *forth) {
     forth_push(forth, l <= a && a < r ? -1 : 0);
 }
 
+void forth_enter(struct forth *forth){
+    forth_push_return(forth, (cell)forth->executing);
+    forth->executing = (struct word** )word_code(forth->current) + 1;
+}
+
 void forth_exit(struct forth *forth) {
     forth->executing = (struct word**)forth_pop_return(forth);
 }
@@ -223,6 +229,7 @@ void compile_start(struct forth *forth){
     assert(length > 0);
 
     word = word_add(forth, (uint8_t)length, buffer);
+    forth_emit(forth, (cell)forth_enter);
     forth->is_compiling = true;
     word->hidden = true;
     word->compiled = true;

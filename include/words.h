@@ -27,6 +27,7 @@ void lt(struct forth *forth);
 void _eq(struct forth *forth);
 void within(struct forth *forth);
 
+void forth_enter(struct forth *forth);
 void forth_exit(struct forth *forth);
 void literal(struct forth *forth);
 void compile_start(struct forth *forth);
